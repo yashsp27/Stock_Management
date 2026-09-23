@@ -1,0 +1,2464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SmartStock - Multi-Role Stock Management System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Devanagari', 'Noto Sans Gujarati', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    /* Custom scrollbar and subtle transitions */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .modal-backdrop {
+      background-color: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+    }
+    /* Touch friendly tap target */
+    button, a, input, select {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white pb-20 md:pb-0">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('dashboard')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
+          <i data-lucide="boxes" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">SmartStock</span>
+          <span class="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 bg-slate-100 rounded text-slate-500" id="headerRoleBadge">Guest</span>
+        </div>
+      </div>
+
+      <!-- Actions & Profile -->
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <!-- Language Switcher Dropdown -->
+        <div class="relative">
+          <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-slate-100 border-none text-xs sm:text-sm font-semibold rounded-lg px-2.5 py-1.5 pr-7 focus:ring-2 focus:ring-indigo-500 text-slate-700 cursor-pointer appearance-none">
+            <option value="en">English (EN)</option>
+            <option value="hi">हिंदी (HI)</option>
+            <option value="gu">ગુજરાતી (GU)</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+            <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+          </div>
+        </div>
+
+        <!-- Google Drive Backup Quick Status Badge -->
+        <div id="driveBackupIndicator" class="hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer hover:bg-emerald-100" onclick="navigate('backup')">
+          <i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span id="headerSyncText">Drive Synced</span>
+        </div>
+
+        <!-- Low Stock Alert Bell -->
+        <div class="relative">
+          <button id="alertBellBtn" onclick="toggleLowStockDrawer()" class="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors relative">
+            <i data-lucide="bell" class="w-5 h-5"></i>
+            <span id="lowStockBadge" class="hidden absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white">0</span>
+          </button>
+        </div>
+
+        <!-- User Profile Dropdown or Auth Button -->
+        <div id="authHeaderContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col md:flex-row gap-6">
+    
+    <!-- Desktop Sidebar Navigation (Hidden on small screens) -->
+    <aside id="desktopSidebar" class="hidden md:block w-64 shrink-0 space-y-6">
+      <nav class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-xs space-y-1">
+        <button onclick="navigate('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" data-view="dashboard">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span data-i18n="nav_dashboard">Dashboard</span>
+        </button>
+
+        <button onclick="navigate('inventory')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" data-view="inventory">
+          <i data-lucide="boxes" class="w-5 h-5"></i>
+          <span data-i18n="nav_inventory">Inventory Items</span>
+        </button>
+
+        <button onclick="navigate('lowStock')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" data-view="lowStock">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>
+            <span data-i18n="nav_low_stock">Low Stock Alerts</span>
+          </div>
+          <span id="lowStockNavCounter" class="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">0</span>
+        </button>
+
+        <!-- Role restricted nav items -->
+        <div id="adminNavItems" class="space-y-1 pt-2 border-t border-slate-100">
+          <p class="px-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider" data-i18n="nav_administration">Administration</p>
+
+          <button onclick="navigate('users')" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" data-view="users">
+            <div class="flex items-center space-x-3">
+              <i data-lucide="users" class="w-5 h-5"></i>
+              <span data-i18n="nav_users">User Management</span>
+            </div>
+            <span id="pendingApprovalsBadge" class="hidden text-xs bg-rose-500 text-white font-bold px-2 py-0.5 rounded-full">0</span>
+          </button>
+
+          <button onclick="navigate('backup')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" data-view="backup">
+            <i data-lucide="hard-drive-download" class="w-5 h-5"></i>
+            <span data-i18n="nav_backup">Google Drive & Backup</span>
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+          <button onclick="navigate('settings')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" data-view="settings">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+            <span data-i18n="nav_settings">Settings</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- System Status Card -->
+      <div class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl p-4 text-white text-sm shadow-md">
+        <div class="flex items-center space-x-2 text-indigo-300 font-semibold mb-1">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span data-i18n="system_status">Live Cloud Mode</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-3" data-i18n="backup_active_desc">Auto Google Drive Sync runs every hour with fallback local persistent storage.</p>
+        <button onclick="triggerDriveSync()" class="w-full text-xs font-semibold py-2 px-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-all flex items-center justify-center space-x-2">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin-hover" id="sidebarSyncIcon"></i>
+          <span data-i18n="btn_backup_now">Sync to Drive Now</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-x-hidden min-w-0" id="mainContainer">
+      <!-- Dynamic Views Loaded Here -->
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Navigation (Visible on mobile/tablet) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 flex justify-around items-center shadow-lg">
+    <button onclick="navigate('dashboard')" class="mobile-nav-btn flex flex-col items-center py-1 px-2.5 rounded-lg text-slate-500 hover:text-indigo-600" data-view="dashboard">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="nav_dashboard">Dashboard</span>
+    </button>
+    <button onclick="navigate('inventory')" class="mobile-nav-btn flex flex-col items-center py-1 px-2.5 rounded-lg text-slate-500 hover:text-indigo-600" data-view="inventory">
+      <i data-lucide="boxes" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="nav_inventory">Stock</span>
+    </button>
+    <button onclick="navigate('lowStock')" class="mobile-nav-btn relative flex flex-col items-center py-1 px-2.5 rounded-lg text-slate-500 hover:text-indigo-600" data-view="lowStock">
+      <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+      <span id="mobileLowStockBadge" class="hidden absolute top-0.5 right-2 w-3.5 h-3.5 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="nav_alerts">Alerts</span>
+    </button>
+    <button onclick="navigate('users')" id="mobileUserBtn" class="mobile-nav-btn relative flex flex-col items-center py-1 px-2.5 rounded-lg text-slate-500 hover:text-indigo-600" data-view="users">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span id="mobilePendingBadge" class="hidden absolute top-0.5 right-2 w-3.5 h-3.5 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="nav_users">Users</span>
+    </button>
+    <button onclick="navigate('backup')" id="mobileBackupBtn" class="mobile-nav-btn flex flex-col items-center py-1 px-2.5 rounded-lg text-slate-500 hover:text-indigo-600" data-view="backup">
+      <i data-lucide="hard-drive" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="nav_backup_short">Backup</span>
+    </button>
+    <button onclick="navigate('settings')" class="mobile-nav-btn flex flex-col items-center py-1 px-2.5 rounded-lg text-slate-500 hover:text-indigo-600" data-view="settings">
+      <i data-lucide="settings" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="nav_settings">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Toast Notification System -->
+  <div id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
+
+  <!-- Modal: Item Create / Edit -->
+  <div id="itemModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 my-8">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <h3 id="itemModalTitle" class="text-lg font-bold text-slate-900" data-i18n="modal_add_item">Add New Stock Item</h3>
+        <button onclick="closeModal('itemModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="itemForm" onsubmit="handleItemFormSubmit(event)" class="mt-4 space-y-4">
+        <input type="hidden" id="itemEditId" value="">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1" data-i18n="label_item_name">Item Name *</label>
+          <input type="text" id="itemNameInput" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-medium" placeholder="e.g. Basmati Rice 5kg / LED Bulb 9W">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1" data-i18n="label_sku">SKU / Code *</label>
+            <input type="text" id="itemSkuInput" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-medium" placeholder="SKU-1001">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1" data-i18n="label_category">Category *</label>
+            <select id="itemCategoryInput" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-medium bg-white">
+              <option value="Groceries">Groceries / કરિયાણું / किराना</option>
+              <option value="Electronics">Electronics / ઇલેક્ટ્રોનિક્સ / इलेक्ट्रॉनिक्स</option>
+              <option value="Apparel">Apparel / કપડાં / वस्त्र</option>
+              <option value="Stationery">Stationery / સ્ટેશનરી / स्टेशनरी</option>
+              <option value="Hardware">Hardware / હાર્ડવેર / हार्डवेयर</option>
+              <option value="General">General / સામાન્ય / सामान्य</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1" data-i18n="label_quantity">Quantity *</label>
+            <input type="number" id="itemQtyInput" min="0" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-medium" placeholder="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1" data-i18n="label_unit">Unit</label>
+            <select id="itemUnitInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-medium bg-white">
+              <option value="Pcs">Pcs (નંગ)</option>
+              <option value="Kg">Kg (કિલો)</option>
+              <option value="Boxes">Boxes (બોક્સ)</option>
+              <option value="Ltr">Ltr (લીટર)</option>
+              <option value="Pack">Pack (પેક)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-amber-600 uppercase mb-1" data-i18n="label_min_threshold">Min Alert *</label>
+            <input type="number" id="itemMinInput" min="1" required class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/40 focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm font-bold text-amber-900" placeholder="10">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1" data-i18n="label_cost_price">Cost Price (₹)</label>
+            <input type="number" step="0.01" id="itemCostInput" min="0" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-medium" placeholder="0.00">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1" data-i18n="label_sell_price">Selling Price (₹)</label>
+            <input type="number" step="0.01" id="itemSellInput" min="0" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-medium" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="pt-3 flex justify-end space-x-3">
+          <button type="button" onclick="closeModal('itemModal')" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-200 transition-colors" data-i18n="btn_save_item">Save Stock Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Adjust Stock Quantity (Quick + / -) -->
+  <div id="adjustModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-md font-bold text-slate-900" data-i18n="modal_adjust_title">Quick Stock In / Out</h3>
+        <button onclick="closeModal('adjustModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 text-center">
+        <p class="text-sm font-semibold text-slate-700" id="adjustItemName"></p>
+        <p class="text-xs text-slate-400 mt-0.5">Current Stock: <span id="adjustCurrentQty" class="font-bold text-slate-900">0</span></p>
+      </div>
+
+      <div class="mt-4 space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1" data-i18n="label_action">Operation</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btnStockIn" onclick="setAdjustType('IN')" class="py-2 rounded-xl text-xs font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center space-x-1.5">
+              <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+              <span data-i18n="btn_stock_in">+ Stock IN</span>
+            </button>
+            <button type="button" id="btnStockOut" onclick="setAdjustType('OUT')" class="py-2 rounded-xl text-xs font-bold border-2 border-transparent bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700 flex items-center justify-center space-x-1.5">
+              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+              <span data-i18n="btn_stock_out">- Stock OUT</span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1" data-i18n="label_change_qty">Quantity to Change</label>
+          <input type="number" id="adjustAmountInput" min="1" value="1" class="w-full text-center text-xl font-bold py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1" data-i18n="label_reason_notes">Reason / Notes</label>
+          <input type="text" id="adjustNotesInput" placeholder="Purchase, Dispatch, Damaged, Sale..." class="w-full text-xs py-2 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="mt-6 flex space-x-2">
+        <button type="button" onclick="closeModal('adjustModal')" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50" data-i18n="btn_cancel">Cancel</button>
+        <button type="button" onclick="submitStockAdjustment()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold" data-i18n="btn_confirm">Confirm Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: User Registration (Accessible on home / login) -->
+  <div id="registerModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900" data-i18n="register_title">Register New Account</h3>
+          <p class="text-xs text-slate-500" data-i18n="register_subtitle">Requires Super Admin approval before login</p>
+        </div>
+        <button onclick="closeModal('registerModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="registerForm" onsubmit="handleRegistrationSubmit(event)" class="mt-4 space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_fullname">Full Name *</label>
+          <input type="text" id="regName" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Ramesh Patel">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_email">Email / Username *</label>
+          <input type="email" id="regEmail" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="ramesh@company.com">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_password">Password *</label>
+          <input type="password" id="regPassword" required minlength="4" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_req_role">Requested Role</label>
+          <select id="regRole" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+            <option value="USER">Standard User (View & Issue Stock)</option>
+            <option value="ADMIN">Admin (Inventory & User Management)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_reg_reason">Reason / Department *</label>
+          <input type="text" id="regReason" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Warehouse Inventory Supervisor">
+        </div>
+
+        <div class="pt-3">
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md transition-colors" data-i18n="btn_submit_reg">
+            Submit for Approval
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Super Admin Create User Direct -->
+  <div id="createUserModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900" data-i18n="create_user_title">Directly Add User / Admin</h3>
+          <p class="text-xs text-slate-500" data-i18n="create_user_subtitle">Instantly activated without pending review</p>
+        </div>
+        <button onclick="closeModal('createUserModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="directUserForm" onsubmit="handleDirectUserCreate(event)" class="mt-4 space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_fullname">Full Name *</label>
+          <input type="text" id="directName" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Priya Sharma">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_email">Email / Login ID *</label>
+          <input type="email" id="directEmail" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="priya@company.com">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_password">Password *</label>
+          <input type="text" id="directPassword" required minlength="4" value="123456" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_assign_role">Assign Role *</label>
+          <select id="directRole" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+            <option value="ADMIN">Admin (Stock & User Operator)</option>
+            <option value="USER">Standard User (Catalog & Request)</option>
+            <option value="SUPERADMIN">Super Admin (Full Governance)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1" data-i18n="label_default_lang">Default Language</label>
+          <select id="directLang" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+            <option value="en">English</option>
+            <option value="hi">हिंदी (Hindi)</option>
+            <option value="gu">ગુજરાતી (Gujarati)</option>
+          </select>
+        </div>
+
+        <div class="pt-3">
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md transition-colors" data-i18n="btn_create_user_now">
+            Create Active Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Side Drawer: Quick Low Stock Notification List -->
+  <div id="lowStockDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out border-l border-slate-200 flex flex-col">
+    <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-amber-50/50">
+      <div class="flex items-center space-x-2">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>
+        <h3 class="font-bold text-slate-900" data-i18n="drawer_low_stock_title">Low Stock Alert Center</h3>
+      </div>
+      <button onclick="toggleLowStockDrawer()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <div class="p-4 flex-1 overflow-y-auto space-y-3" id="lowStockDrawerList">
+      <!-- Items dynamically populated -->
+    </div>
+
+    <div class="p-4 border-t border-slate-100 bg-slate-50">
+      <button onclick="navigate('inventory'); toggleLowStockDrawer()" class="w-full py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl" data-i18n="btn_view_full_inventory">
+        Go to Inventory Table
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* Multi-Language Dictionary: English, Hindi, and Gujarati */
+    const I18N_DICTIONARY = {
+      en: {
+        nav_dashboard: "Dashboard",
+        nav_inventory: "Inventory",
+        nav_low_stock: "Low Stock Alerts",
+        nav_administration: "Administration",
+        nav_users: "User Management",
+        nav_backup: "Google Drive & Backup",
+        nav_backup_short: "Backup",
+        nav_settings: "Settings",
+        nav_alerts: "Alerts",
+        system_status: "Live Cloud Mode",
+        backup_active_desc: "Automatic Google Drive sync is active with instant cloud replication.",
+        btn_backup_now: "Sync to Drive Now",
+        total_items: "Total Catalog Items",
+        low_stock_items: "Low Stock Alerts",
+        stock_value: "Total Inventory Value",
+        pending_users: "Pending Registrations",
+        add_new_stock: "+ Add New Item",
+        search_placeholder: "Search item name, SKU, or category...",
+        filter_all_categories: "All Categories",
+        status_in_stock: "In Stock",
+        status_low_stock: "Low Stock",
+        status_out_of_stock: "Out of Stock",
+        table_sku: "SKU",
+        table_name: "Item Name",
+        table_category: "Category",
+        table_qty: "Stock Quantity",
+        table_min: "Alert Min",
+        table_cost: "Cost Price",
+        table_sell: "Sell Price",
+        table_actions: "Actions",
+        modal_add_item: "Add New Stock Item",
+        modal_edit_item: "Edit Stock Item",
+        label_item_name: "Item Name *",
+        label_sku: "SKU / Code *",
+        label_category: "Category *",
+        label_quantity: "Quantity *",
+        label_unit: "Unit",
+        label_min_threshold: "Min Alert Level *",
+        label_cost_price: "Cost Price (₹)",
+        label_sell_price: "Selling Price (₹)",
+        btn_cancel: "Cancel",
+        btn_save_item: "Save Stock Item",
+        modal_adjust_title: "Quick Stock In / Out",
+        label_action: "Operation",
+        btn_stock_in: "+ Stock IN",
+        btn_stock_out: "- Stock OUT",
+        label_change_qty: "Quantity to Adjust",
+        label_reason_notes: "Reason / Reference Notes",
+        btn_confirm: "Confirm Update",
+        register_title: "Register New Account",
+        register_subtitle: "Requires Super Admin approval before login",
+        label_fullname: "Full Name *",
+        label_email: "Email / Username *",
+        label_password: "Password *",
+        label_req_role: "Requested Role",
+        label_reg_reason: "Reason / Department *",
+        btn_submit_reg: "Submit for Approval",
+        create_user_title: "Directly Add User / Admin",
+        create_user_subtitle: "Instantly activated without pending review",
+        label_assign_role: "Assign Role *",
+        label_default_lang: "Default Language",
+        btn_create_user_now: "Create Active Account",
+        drawer_low_stock_title: "Low Stock Alert Center",
+        btn_view_full_inventory: "Go to Inventory Table",
+        btn_login: "Login",
+        btn_register: "Register",
+        btn_logout: "Logout",
+        demo_accounts: "Quick Demo Logins",
+        guest_banner: "You are currently viewing as Guest. Log in to make stock changes or request items.",
+        toast_saved: "Changes saved successfully",
+        toast_deleted: "Item deleted successfully",
+        toast_registered: "Registration submitted for Super Admin review!",
+        toast_approved: "User approval status updated",
+        toast_backup_success: "Google Drive automated backup completed successfully!",
+        toast_restore_success: "Data restored from backup file successfully!",
+        drive_folder_label: "Google Drive Folder: /StockManager_Backups/",
+        drive_last_synced: "Last backed up to Google Drive:",
+        drive_connected: "Google Drive Connected (OAuth 2.0)",
+        sync_frequency: "Automated Sync Frequency",
+        download_json: "Download Local JSON Backup",
+        restore_json: "Restore Data from JSON",
+        settings_title: "Application Settings",
+        lang_preference: "Language Preference (ભાષા / भाषा)",
+        role_superadmin: "Super Admin",
+        role_admin: "Admin",
+        role_user: "User",
+        status_pending: "Pending Approval",
+        status_approved: "Active",
+        status_rejected: "Rejected"
+      },
+      hi: {
+        nav_dashboard: "डैशबोर्ड",
+        nav_inventory: "स्टॉक सूची",
+        nav_low_stock: "कम स्टॉक चेतावनी",
+        nav_administration: "प्रशासन",
+        nav_users: "उपयोगकर्ता प्रबंधन",
+        nav_backup: "गूगल ड्राइव बैकअप",
+        nav_backup_short: "बैकअप",
+        nav_settings: "सेटिंग्स",
+        nav_alerts: "अलर्ट",
+        system_status: "क्लाउड सक्रिय",
+        backup_active_desc: "गूगल ड्राइव स्वचालित बैकअप चालू है।",
+        btn_backup_now: "अभी ड्राइव में बैकअप लें",
+        total_items: "कुल स्टॉक आइटम",
+        low_stock_items: "कम स्टॉक अलर्ट",
+        stock_value: "कुल इन्वेंट्री मूल्य",
+        pending_users: "लंबित उपयोगकर्ता स्वीकृति",
+        add_new_stock: "+ नया आइटम जोड़ें",
+        search_placeholder: "नाम, SKU या श्रेणी खोजें...",
+        filter_all_categories: "सभी श्रेणियां",
+        status_in_stock: "उपलब्ध",
+        status_low_stock: "कम स्टॉक",
+        status_out_of_stock: "समाप्त",
+        table_sku: "SKU कोड",
+        table_name: "आइटम का नाम",
+        table_category: "श्रेणी",
+        table_qty: "मात्रा",
+        table_min: "न्यूनतम अलर्ट",
+        table_cost: "लागत मूल्य",
+        table_sell: "बिक्री मूल्य",
+        table_actions: "कार्रवाई",
+        modal_add_item: "नया स्टॉक आइटम जोड़ें",
+        modal_edit_item: "स्टॉक आइटम संपादित करें",
+        label_item_name: "आइटम का नाम *",
+        label_sku: "SKU / कोड *",
+        label_category: "श्रेणी *",
+        label_quantity: "मात्रा *",
+        label_unit: "इकाई",
+        label_min_threshold: "न्यूनतम अलर्ट सीमा *",
+        label_cost_price: "लागत मूल्य (₹)",
+        label_sell_price: "बिक्री मूल्य (₹)",
+        btn_cancel: "रद्द करें",
+        btn_save_item: "स्टॉक सहेजें",
+        modal_adjust_title: "त्वरित स्टॉक इन / आउट",
+        label_action: "प्रक्रिया",
+        btn_stock_in: "+ स्टॉक इन (आवक)",
+        btn_stock_out: "- स्टॉक आउट (जावक)",
+        label_change_qty: "बदलने वाली मात्रा",
+        label_reason_notes: "कारण / टिप्पणी",
+        btn_confirm: "पुष्टि करें",
+        register_title: "नया खाता पंजीकृत करें",
+        register_subtitle: "लॉगिन करने से पहले सुपर एडमिन अनुमोदन आवश्यक है",
+        label_fullname: "पूरा नाम *",
+        label_email: "ईमेल / यूज़रनेम *",
+        label_password: "पासवर्ड *",
+        label_req_role: "वांछित भूमिका",
+        label_reg_reason: "कारण / विभाग *",
+        btn_submit_reg: "अनुमोदन हेतु भेजें",
+        create_user_title: "सीधे उपयोगकर्ता / व्यवस्थापक जोड़ें",
+        create_user_subtitle: "बिना प्रतीक्षा के तुरंत सक्रिय",
+        label_assign_role: "भूमिका सौंपें *",
+        label_default_lang: "डिफ़ॉल्ट भाषा",
+        btn_create_user_now: "सक्रिय खाता बनाएं",
+        drawer_low_stock_title: "कम स्टॉक अलर्ट केंद्र",
+        btn_view_full_inventory: "पूरी सूची देखें",
+        btn_login: "लॉग इन",
+        btn_register: "पंजीकरण करें",
+        btn_logout: "लॉग आउट",
+        demo_accounts: "त्वरित डेमो लॉगिन",
+        guest_banner: "आप वर्तमान में अतिथि के रूप में देख रहे हैं। बदलाव करने के लिए लॉगिन करें।",
+        toast_saved: "सफलतापूर्वक सहेजा गया",
+        toast_deleted: "आइटम सफलतापूर्वक हटा दिया गया",
+        toast_registered: "पंजीकरण सुपर व्यवस्थापक के पास अनुमोदन हेतु भेज दिया गया है!",
+        toast_approved: "उपयोगकर्ता स्थिति अपडेट की गई",
+        toast_backup_success: "गूगल ड्राइव बैकअप सफलतापूर्वक पूरा हुआ!",
+        toast_restore_success: "बैकअप फ़ाइल से डेटा पुनर्स्थापित हुआ!",
+        drive_folder_label: "गूगल ड्राइव फ़ोल्डर: /StockManager_Backups/",
+        drive_last_synced: "गूगल ड्राइव में अंतिम बैकअप:",
+        drive_connected: "गूगल ड्राइव कनेक्टेड (OAuth 2.0)",
+        sync_frequency: "स्वचालित सिंक आवृत्ति",
+        download_json: "स्थानीय JSON बैकअप डाउनलोड करें",
+        restore_json: "JSON से डेटा पुनर्स्थापित करें",
+        settings_title: "अनुप्रयोग सेटिंग्स",
+        lang_preference: "भाषा प्राथमिकता (Language Preference)",
+        role_superadmin: "सुपर व्यवस्थापक (Super Admin)",
+        role_admin: "व्यवस्थापक (Admin)",
+        role_user: "उपयोगकर्ता (User)",
+        status_pending: "लंबित अनुमोदन",
+        status_approved: "सक्रिय",
+        status_rejected: "अस्वीकृत"
+      },
+      gu: {
+        nav_dashboard: "ડેશબોર્ડ",
+        nav_inventory: "સ્ટોક યાદી",
+        nav_low_stock: "ઓછા સ્ટોકની ચેતવણી",
+        nav_administration: "વહીવટ (Admin)",
+        nav_users: "વપરાશકર્તા સંચાલન",
+        nav_backup: "ગુગલ ડ્રાઇવ બેકઅપ",
+        nav_backup_short: "બેકઅપ",
+        nav_settings: "સેટિંગ્સ",
+        nav_alerts: "ચેતવણીઓ",
+        system_status: "ક્લાઉડ મોડ સક્રિય",
+        backup_active_desc: "ગુગલ ડ્રાઇવ સ્વચાલિત બેકઅપ દર કલાકે કાર્યરત છે.",
+        btn_backup_now: "હમણાં ડ્રાઇવ પર બેકઅપ લો",
+        total_items: "કુલ સ્ટોક આઇટમ્સ",
+        low_stock_items: "ઓછા સ્ટોક ચેતવણી",
+        stock_value: "કુલ માલસામાન મૂલ્ય",
+        pending_users: "મંજૂરી માટે બાકી વપરાશકર્તા",
+        add_new_stock: "+ નવી આઇટમ ઉમેરો",
+        search_placeholder: "આઇટમ નામ, SKU અથવા કેટેગરી શોધો...",
+        filter_all_categories: "બધી કેટેગરી",
+        status_in_stock: "સ્ટોકમાં ઉપલબ્ધ",
+        status_low_stock: "ઓછો સ્ટોક",
+        status_out_of_stock: "સ્ટોક ખલાસ",
+        table_sku: "SKU કોડ",
+        table_name: "આઇટમનું નામ",
+        table_category: "કેટેગરી",
+        table_qty: "સ્ટોક જથ્થો",
+        table_min: "ચેતવણી મર્યાદા",
+        table_cost: "ખરીદ કિંમત",
+        table_sell: "વેચાણ કિંમત",
+        table_actions: "ક્રિયાઓ",
+        modal_add_item: "નવી સ્ટોક આઇટમ ઉમેરો",
+        modal_edit_item: "સ્ટોક આઇટમમાં ફેરફાર કરો",
+        label_item_name: "આઇટમનું નામ *",
+        label_sku: "SKU / કોડ *",
+        label_category: "કેટેગરી *",
+        label_quantity: "જથ્થો *",
+        label_unit: "એકમ",
+        label_min_threshold: "ઓછા સ્ટોકની લઘુત્તમ મર્યાદા *",
+        label_cost_price: "ખરીદ કિંમત (₹)",
+        label_sell_price: "વેચાણ કિંમત (₹)",
+        btn_cancel: "રદ કરો",
+        btn_save_item: "સ્ટોક સાચવો",
+        modal_adjust_title: "ઝડપી સ્ટોક આવક / જાવક",
+        label_action: "ક્રિયા",
+        btn_stock_in: "+ સ્ટોક આવક (IN)",
+        btn_stock_out: "- સ્ટોક જાવક (OUT)",
+        label_change_qty: "જથ્થામાં ફેરફાર",
+        label_reason_notes: "કારણ / નોંધ",
+        btn_confirm: "ખાતરી કરો",
+        register_title: "નવું એકાઉન્ટ રજીસ્ટર કરો",
+        register_subtitle: "લોગિન કરતા પહેલા સુપર એડમિનની મંજૂરી જરૂરી છે",
+        label_fullname: "પૂરું નામ *",
+        label_email: "ઇમેઇલ / વપરાશકર્તા નામ *",
+        label_password: "પાસવર્ડ *",
+        label_req_role: "વિનંતી કરેલ હોદ્દો",
+        label_reg_reason: "કારણ / વિભાગ *",
+        btn_submit_reg: "મંજૂરી માટે સબમિટ કરો",
+        create_user_title: "સીધા યુઝર / એડમિન ઉમેરો",
+        create_user_subtitle: "વિલંબ વગર તુરંત સક્રિય એકાઉન્ટ",
+        label_assign_role: "હોદ્દો ફાળવો *",
+        label_default_lang: "મૂળભૂત ભાષા",
+        btn_create_user_now: "સક્રિય એકાઉન્ટ બનાવો",
+        drawer_low_stock_title: "ઓછા સ્ટોકની ચેતવણી કેન્દ્ર",
+        btn_view_full_inventory: "સંપૂર્ણ સ્ટોક જુઓ",
+        btn_login: "લોગિન",
+        btn_register: "રજીસ્ટ્રેશન",
+        btn_logout: "લોગ આઉટ",
+        demo_accounts: "ઝડપી ડેમો લોગિન",
+        guest_banner: "તમે હાલમાં ગેસ્ટ તરીકે જોઈ રહ્યા છો. ફેરફારો કરવા માટે લોગિન કરો.",
+        toast_saved: "ફેરફારો સફળતાપૂર્વક સાચવવામાં આવ્યા",
+        toast_deleted: "આઇટમ સફળતાપૂર્વક હટાવી દેવામાં આવી",
+        toast_registered: "સુપર એડમિન મંજૂરી માટે રજીસ્ટ્રેશન મોકલાયું!",
+        toast_approved: "વપરાશકર્તા મંજૂરી અપડેટ થઈ ગઈ",
+        toast_backup_success: "ગુગલ ડ્રાઇવ બેકઅપ સફળતાપૂર્વક સંપન્ન થયું!",
+        toast_restore_success: "બેકઅપ ફાઇલમાંથી ડેટા સફળતાપૂર્વક રીસ્ટોર થયો!",
+        drive_folder_label: "ગુગલ ડ્રાઇવ ફોલ્ડર: /StockManager_Backups/",
+        drive_last_synced: "ગુગલ ડ્રાઇવમાં છેલ્લું બેકઅપ:",
+        drive_connected: "ગુગલ ડ્રાઇવ જોડાયેલ છે (OAuth 2.0)",
+        sync_frequency: "ઓટોમેટિક બેકઅપ ફ્રીક્વન્સી",
+        download_json: "લોકલ JSON બેકઅપ ડાઉનલોડ કરો",
+        restore_json: "JSON ફાઇલમાંથી રીસ્ટોર કરો",
+        settings_title: "સિસ્ટમ સેટિંગ્સ",
+        lang_preference: "ભાષા પસંદગી (Language Preference)",
+        role_superadmin: "સુપર એડમિન (Super Admin)",
+        role_admin: "એડમિન (Admin)",
+        role_user: "સામાન્ય વપરાશકર્તા (User)",
+        status_pending: "મંજૂરી માટે બાકી",
+        status_approved: "સક્રિય",
+        status_rejected: "નામંજૂર"
+      }
+    };
+
+    const STORAGE_KEY_ITEMS = "smartstock_items_v2";
+    const STORAGE_KEY_USERS = "smartstock_users_v2";
+    const STORAGE_KEY_LOGS = "smartstock_logs_v2";
+    const STORAGE_KEY_AUTH = "smartstock_current_user_v2";
+    const STORAGE_KEY_BACKUP_SETTINGS = "smartstock_backup_config_v2";
+    const STORAGE_KEY_LANG = "smartstock_active_lang_v2";
+
+    // Initial Seed Data for Inventory
+    const INITIAL_ITEMS = [
+      { id: "itm_1", name: "Premium Basmati Rice", sku: "GROC-RICE-01", category: "Groceries", qty: 45, unit: "Kg", minThreshold: 50, costPrice: 90, sellPrice: 120, updatedAt: new Date().toISOString() },
+      { id: "itm_2", name: "Refined Sunflower Oil", sku: "GROC-OIL-02", category: "Groceries", qty: 12, unit: "Ltr", minThreshold: 30, costPrice: 110, sellPrice: 140, updatedAt: new Date().toISOString() },
+      { id: "itm_3", name: "LED Bulb 9 Watt", sku: "ELEC-BLB-09", category: "Electronics", qty: 120, unit: "Pcs", minThreshold: 25, costPrice: 45, sellPrice: 95, updatedAt: new Date().toISOString() },
+      { id: "itm_4", name: "Copper Wire 1.5mm", sku: "ELEC-WIR-15", category: "Electronics", qty: 4, unit: "Boxes", minThreshold: 10, costPrice: 850, sellPrice: 1250, updatedAt: new Date().toISOString() },
+      { id: "itm_5", name: "Cotton Crew Neck T-Shirt", sku: "APP-TSH-BLU", category: "Apparel", qty: 65, unit: "Pcs", minThreshold: 20, costPrice: 180, sellPrice: 399, updatedAt: new Date().toISOString() },
+      { id: "itm_6", name: "A4 Printer Paper Rim (500)", sku: "STAT-PAP-A4", category: "Stationery", qty: 8, unit: "Pack", minThreshold: 15, costPrice: 220, sellPrice: 320, updatedAt: new Date().toISOString() },
+      { id: "itm_7", name: "Stainless Steel Hinges 4 inch", sku: "HRD-HNG-4IN", category: "Hardware", qty: 18, unit: "Pcs", minThreshold: 20, costPrice: 40, sellPrice: 75, updatedAt: new Date().toISOString() }
+    ];
+
+    // Initial Seed Data for Users & Admins (Passwords kept in storage)
+    const INITIAL_USERS = [
+      { id: "usr_super", name: "Kishore Dave", email: "super@admin.com", password: "admin", role: "SUPERADMIN", status: "APPROVED", reason: "Head Executive", lang: "gu", createdAt: "2026-01-10T10:00:00Z" },
+      { id: "usr_admin", name: "Rajesh Sharma", email: "admin@store.com", password: "admin", role: "ADMIN", status: "APPROVED", reason: "Inventory Manager", lang: "hi", createdAt: "2026-02-01T11:00:00Z" },
+      { id: "usr_staff", name: "Amit Joshi", email: "user@store.com", password: "user", role: "USER", status: "APPROVED", reason: "Store Executive", lang: "en", createdAt: "2026-02-15T09:30:00Z" },
+      { id: "usr_pending1", name: "Meera Patel", email: "meera@branch.com", password: "user", role: "USER", status: "PENDING", reason: "Sales Representative at SG Highway Branch", lang: "gu", createdAt: new Date(Date.now() - 3600000 * 5).toISOString() },
+      { id: "usr_pending2", name: "Vikas Verma", email: "vikas@logistics.com", password: "admin", role: "ADMIN", status: "PENDING", reason: "New Procurement Officer", lang: "hi", createdAt: new Date(Date.now() - 3600000 * 12).toISOString() }
+    ];
+
+    // Seed Activity Logs
+    const INITIAL_LOGS = [
+      { id: "log_1", action: "Google Drive Backup", user: "System Scheduler", timestamp: new Date(Date.now() - 1000 * 60 * 35).toISOString(), note: "Automatic hourly backup sync" },
+      { id: "log_2", action: "Stock Out", user: "Rajesh Sharma", timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), note: "Dispatched 6 Ltr Refined Oil (GROC-OIL-02)" }
+    ];
+
+    // Load or initialize storage
+    function getStoredData(key, fallback) {
+      try {
+        const val = localStorage.getItem(key);
+        return val ? JSON.parse(val) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function setStoredData(key, data) {
+      try {
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
+
+    // State
+    let items = getStoredData(STORAGE_KEY_ITEMS, INITIAL_ITEMS);
+    let users = getStoredData(STORAGE_KEY_USERS, INITIAL_USERS);
+    let logs = getStoredData(STORAGE_KEY_LOGS, INITIAL_LOGS);
+    let currentUser = getStoredData(STORAGE_KEY_AUTH, null); // Start as null or default to super admin
+    let currentLang = localStorage.getItem(STORAGE_KEY_LANG) || "en";
+    let currentView = "dashboard";
+    let adjustActiveItem = null;
+    let adjustType = "IN"; // 'IN' or 'OUT'
+
+    // Google Drive Backup Settings
+    let driveConfig = getStoredData(STORAGE_KEY_BACKUP_SETTINGS, {
+      isConnected: true,
+      lastSyncTime: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
+      syncFrequency: "hourly", // hourly, daily, realtime
+      targetFolder: "StockManager_Backups_2026",
+      autoSync: true
+    });
+
+    // Translation helper
+    function t(key) {
+      const dict = I18N_DICTIONARY[currentLang] || I18N_DICTIONARY.en;
+      return dict[key] || I18N_DICTIONARY.en[key] || key;
+    }
+
+    function applyLocalization() {
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (key && t(key)) {
+          el.innerText = t(key);
+        }
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        const key = el.getAttribute("data-i18n-placeholder");
+        if (key && t(key)) {
+          el.placeholder = t(key);
+        }
+      });
+      document.getElementById("langSelect").value = currentLang;
+    }
+
+    function changeLanguage(newLang) {
+      currentLang = newLang;
+      localStorage.setItem(STORAGE_KEY_LANG, newLang);
+      if (currentUser) {
+        // Save preference to user profile
+        currentUser.lang = newLang;
+        const uIdx = users.findIndex(u => u.id === currentUser.id);
+        if (uIdx !== -1) {
+          users[uIdx].lang = newLang;
+          setStoredData(STORAGE_KEY_USERS, users);
+        }
+        setStoredData(STORAGE_KEY_AUTH, currentUser);
+      }
+      applyLocalization();
+      renderCurrentView();
+      updateHeaderBadges();
+      lucide.createIcons();
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      
+      const bgColors = {
+        success: "bg-emerald-600 text-white shadow-emerald-200",
+        error: "bg-rose-600 text-white shadow-rose-200",
+        warning: "bg-amber-500 text-white shadow-amber-200",
+        info: "bg-slate-900 text-white shadow-slate-300"
+      };
+
+      const icons = {
+        success: "check-circle-2",
+        error: "alert-circle",
+        warning: "alert-triangle",
+        info: "info"
+      };
+
+      toast.className = `flex items-center space-x-2.5 px-4 py-3 rounded-2xl shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${bgColors[type] || bgColors.info}`;
+      toast.innerHTML = `
+        <i data-lucide="${icons[type] || 'info'}" class="w-5 h-5 shrink-0"></i>
+        <span class="text-xs sm:text-sm font-medium">${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Animate in
+      requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+      });
+
+      // Remove after 3.5s
+      setTimeout(() => {
+        toast.classList.add("translate-y-2", "opacity-0");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function isSuperAdmin() {
+      return currentUser && currentUser.role === "SUPERADMIN";
+    }
+
+    function isAdmin() {
+      return currentUser && (currentUser.role === "ADMIN" || currentUser.role === "SUPERADMIN");
+    }
+
+    function isStandardUser() {
+      return currentUser && currentUser.role === "USER";
+    }
+
+    function navigate(viewName) {
+      currentView = viewName;
+      
+      // Update sidebar nav active state
+      document.querySelectorAll(".nav-btn, .mobile-nav-btn").forEach(btn => {
+        const v = btn.getAttribute("data-view");
+        if (v === viewName) {
+          btn.classList.add("bg-indigo-50", "text-indigo-600", "font-bold");
+          btn.classList.remove("text-slate-500", "text-slate-600");
+        } else {
+          btn.classList.remove("bg-indigo-50", "text-indigo-600", "font-bold");
+          btn.classList.add("text-slate-500");
+        }
+      });
+
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderCurrentView() {
+      const container = document.getElementById("mainContainer");
+      if (!container) return;
+
+      switch (currentView) {
+        case "dashboard":
+          renderDashboardView(container);
+          break;
+        case "inventory":
+          renderInventoryView(container);
+          break;
+        case "lowStock":
+          renderLowStockView(container);
+          break;
+        case "users":
+          renderUsersView(container);
+          break;
+        case "backup":
+          renderBackupView(container);
+          break;
+        case "settings":
+          renderSettingsView(container);
+          break;
+        case "login":
+          renderLoginView(container);
+          break;
+        default:
+          renderDashboardView(container);
+      }
+      lucide.createIcons();
+      applyLocalization();
+    }
+
+    function renderDashboardView(container) {
+      const lowStockItems = items.filter(it => Number(it.qty) <= Number(it.minThreshold));
+      const totalInventoryVal = items.reduce((acc, curr) => acc + (Number(curr.qty) * (Number(curr.costPrice) || 0)), 0);
+      const pendingUsersCount = users.filter(u => u.status === "PENDING").length;
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <!-- Welcome / Guest Banner -->
+          ${!currentUser ? `
+            <div class="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-amber-500/10 border border-indigo-200/60 rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 mb-2">
+                  <i data-lucide="eye" class="w-3.5 h-3.5 mr-1"></i> Guest Mode
+                </span>
+                <h2 class="text-lg sm:text-xl font-bold text-slate-800" data-i18n="guest_banner">You are currently viewing as Guest. Log in to make stock changes or request items.</h2>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Full multi-role permissions: Super Admin (all approvals & users), Admin (inventory control), and User.</p>
+              </div>
+              <div class="flex items-center space-x-2 shrink-0">
+                <button onclick="navigate('login')" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-200 transition-all">
+                  <span data-i18n="btn_login">Login</span> / Demo
+                </button>
+                <button onclick="openModal('registerModal')" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-all" data-i18n="btn_register">
+                  Register
+                </button>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Header Titles -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight" data-i18n="nav_dashboard">Dashboard</h1>
+              <p class="text-xs sm:text-sm text-slate-500">Real-time inventory levels, alerts, and synchronization overview.</p>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              ${isAdmin() ? `
+                <button onclick="openItemModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-200 flex items-center space-x-1.5 transition-colors">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span data-i18n="add_new_stock">+ Add Item</span>
+                </button>
+              ` : ''}
+              <button onclick="triggerDriveSync()" class="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-medium flex items-center space-x-1.5 transition-colors" title="Sync Google Drive">
+                <i data-lucide="cloud-sync" class="w-4 h-4 text-emerald-600"></i>
+                <span class="hidden sm:inline" data-i18n="btn_backup_now">Sync to Drive</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Stat Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            
+            <!-- Stat 1: Total Items -->
+            <div onclick="navigate('inventory')" class="cursor-pointer bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs hover:border-indigo-300 transition-all">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="total_items">Total Items</span>
+                <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <i data-lucide="boxes" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-extrabold text-slate-900">${items.length}</div>
+              <p class="text-[11px] text-slate-400 mt-1">Across 6 product categories</p>
+            </div>
+
+            <!-- Stat 2: Low Stock Alerts -->
+            <div onclick="navigate('lowStock')" class="cursor-pointer bg-white p-4 sm:p-5 rounded-3xl border ${lowStockItems.length > 0 ? 'border-rose-200 bg-rose-50/20' : 'border-slate-200/80'} shadow-xs hover:border-rose-300 transition-all">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 font-bold" data-i18n="low_stock_items">Low Stock</span>
+                <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-extrabold text-rose-600">${lowStockItems.length}</div>
+              <p class="text-[11px] text-rose-400 mt-1">Needs replenishment</p>
+            </div>
+
+            <!-- Stat 3: Total Stock Valuation -->
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="stock_value">Valuation</span>
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <i data-lucide="indian-rupee" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-extrabold text-slate-900">₹${totalInventoryVal.toLocaleString('en-IN')}</div>
+              <p class="text-[11px] text-slate-400 mt-1">Cost basis inventory</p>
+            </div>
+
+            <!-- Stat 4: Pending Approvals -->
+            <div onclick="${isSuperAdmin() ? "navigate('users')" : ''}" class="${isSuperAdmin() ? 'cursor-pointer' : ''} bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="pending_users">Pending Approvals</span>
+                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <i data-lucide="user-check" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-extrabold text-amber-600">${pendingUsersCount}</div>
+              <p class="text-[11px] text-slate-400 mt-1">${isSuperAdmin() ? 'Click to review & approve' : 'Awaiting Super Admin'}</p>
+            </div>
+          </div>
+
+          <!-- Urgent Low Stock Alert Card if items are low -->
+          ${lowStockItems.length > 0 ? `
+            <div class="bg-rose-50 border border-rose-200 rounded-3xl p-4 sm:p-5">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2 text-rose-800 font-bold text-sm sm:text-base">
+                  <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600"></i>
+                  <span>Items Below Safety Stock Threshold (${lowStockItems.length})</span>
+                </div>
+                <button onclick="navigate('lowStock')" class="text-xs font-semibold text-rose-700 hover:underline">View All &rarr;</button>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                ${lowStockItems.slice(0, 3).map(it => `
+                  <div class="bg-white p-3 rounded-2xl border border-rose-100 flex items-center justify-between">
+                    <div>
+                      <p class="text-xs font-bold text-slate-800">${escapeHtml(it.name)}</p>
+                      <p class="text-[10px] text-slate-400">SKU: ${it.sku} &bull; Min: ${it.minThreshold} ${it.unit}</p>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-xs font-extrabold text-rose-600 bg-rose-50 px-2 py-1 rounded-lg">${it.qty} ${it.unit}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Recent Activity & Google Drive Cloud Status -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Quick Inventory Table (Top 5) -->
+            <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider" data-i18n="nav_inventory">Inventory Items</h3>
+                <button onclick="navigate('inventory')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                  Full Catalog &rarr;
+                </button>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-100 text-slate-400 uppercase font-semibold">
+                      <th class="pb-2" data-i18n="table_name">Item</th>
+                      <th class="pb-2 hidden sm:table-cell" data-i18n="table_category">Category</th>
+                      <th class="pb-2 text-right" data-i18n="table_qty">Stock</th>
+                      <th class="pb-2 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${items.slice(0, 5).map(item => {
+                      const isLow = Number(item.qty) <= Number(item.minThreshold);
+                      return `
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                          <td class="py-2.5 font-medium text-slate-800">
+                            <div>${escapeHtml(item.name)}</div>
+                            <span class="text-[10px] text-slate-400">${item.sku}</span>
+                          </td>
+                          <td class="py-2.5 hidden sm:table-cell text-slate-500">${item.category}</td>
+                          <td class="py-2.5 text-right font-bold ${isLow ? 'text-rose-600' : 'text-slate-800'}">
+                            ${item.qty} <span class="text-[10px] font-normal text-slate-400">${item.unit}</span>
+                          </td>
+                          <td class="py-2.5 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${isLow ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}">
+                              ${isLow ? t('status_low_stock') : t('status_in_stock')}
+                            </span>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Google Drive Status Card -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center space-x-2 text-indigo-700 mb-3">
+                  <div class="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                    <i data-lucide="cloud" class="w-4 h-4 text-indigo-600"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-slate-900">Google Drive Backup</h3>
+                    <p class="text-[11px] text-emerald-600 font-semibold flex items-center">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-1"></span> Automated Sync Active
+                    </p>
+                  </div>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-3 space-y-2 text-xs text-slate-600 my-3">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Target Folder:</span>
+                    <span class="font-mono text-[11px] font-semibold text-slate-800">${driveConfig.targetFolder}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Interval:</span>
+                    <span class="font-semibold capitalize">${driveConfig.syncFrequency}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Last Synced:</span>
+                    <span class="font-medium text-slate-700">${formatRelativeTime(driveConfig.lastSyncTime)}</span>
+                  </div>
+                </div>
+
+                <div class="text-[11px] text-slate-500">
+                  Includes full database snapshot with roles, passwords, inventory catalog, and activity audit trails.
+                </div>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+                <button onclick="triggerDriveSync()" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                  <span data-i18n="btn_backup_now">Sync Now</span>
+                </button>
+                <button onclick="navigate('backup')" class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50" data-i18n="nav_backup_short">
+                  Config
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInventoryView(container) {
+      container.innerHTML = `
+        <div class="space-y-4">
+          <!-- Page Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight" data-i18n="nav_inventory">Inventory Management</h1>
+              <p class="text-xs sm:text-sm text-slate-500">Manage catalog, track quantities, update pricing, and adjust stock in/out.</p>
+            </div>
+            
+            ${isAdmin() ? `
+              <button onclick="openItemModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-200 flex items-center space-x-1.5 transition-colors shrink-0">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span data-i18n="add_new_stock">+ Add New Item</span>
+              </button>
+            ` : `
+              <div class="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl font-medium">
+                <i data-lucide="lock" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i> Admin permission required to add or modify items
+              </div>
+            `}
+          </div>
+
+          <!-- Filters & Search Toolbar -->
+          <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-3">
+            <!-- Search Input -->
+            <div class="relative w-full sm:flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
+              <input type="text" id="inventorySearch" oninput="filterInventoryTable()" placeholder="Search item name, SKU, or category..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <!-- Category Filter -->
+            <div class="w-full sm:w-auto flex items-center space-x-2">
+              <select id="inventoryCategoryFilter" onchange="filterInventoryTable()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 text-xs sm:text-sm rounded-xl px-3 py-2 text-slate-700 focus:outline-none">
+                <option value="ALL">All Categories / બધી કેટેગરી</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Apparel">Apparel</option>
+                <option value="Stationery">Stationery</option>
+                <option value="Hardware">Hardware</option>
+                <option value="General">General</option>
+              </select>
+
+              <select id="inventoryStockFilter" onchange="filterInventoryTable()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 text-xs sm:text-sm rounded-xl px-3 py-2 text-slate-700 focus:outline-none">
+                <option value="ALL">All Stock Levels</option>
+                <option value="LOW">Low Stock Only</option>
+                <option value="ADEQUATE">Adequate Stock</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs sm:text-sm" id="mainInventoryTable">
+                <thead class="bg-slate-50/80 border-b border-slate-100 text-slate-500 uppercase text-[11px] font-semibold">
+                  <tr>
+                    <th class="py-3.5 px-4" data-i18n="table_sku">SKU</th>
+                    <th class="py-3.5 px-4" data-i18n="table_name">Item Details</th>
+                    <th class="py-3.5 px-4" data-i18n="table_category">Category</th>
+                    <th class="py-3.5 px-4 text-right" data-i18n="table_qty">Quantity</th>
+                    <th class="py-3.5 px-4 text-right" data-i18n="table_min">Min Alert</th>
+                    <th class="py-3.5 px-4 text-right hidden md:table-cell" data-i18n="table_cost">Cost (₹)</th>
+                    <th class="py-3.5 px-4 text-right hidden sm:table-cell" data-i18n="table_sell">Sell (₹)</th>
+                    <th class="py-3.5 px-4 text-center" data-i18n="table_actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="inventoryTableBody" class="divide-y divide-slate-100">
+                  <!-- Populated by filterInventoryTable -->
+                </tbody>
+              </table>
+            </div>
+
+            <div id="noInventoryMessage" class="hidden p-8 text-center text-slate-400">
+              <i data-lucide="package-search" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i>
+              <p class="font-medium text-sm">No items found matching the filter criteria.</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      filterInventoryTable();
+    }
+
+    function filterInventoryTable() {
+      const searchInput = (document.getElementById("inventorySearch")?.value || "").toLowerCase().trim();
+      const catFilter = document.getElementById("inventoryCategoryFilter")?.value || "ALL";
+      const stockFilter = document.getElementById("inventoryStockFilter")?.value || "ALL";
+      const tbody = document.getElementById("inventoryTableBody");
+      const noMsg = document.getElementById("noInventoryMessage");
+
+      if (!tbody) return;
+
+      const filtered = items.filter(it => {
+        const matchesSearch = it.name.toLowerCase().includes(searchInput) ||
+                              it.sku.toLowerCase().includes(searchInput) ||
+                              it.category.toLowerCase().includes(searchInput);
+        const matchesCategory = (catFilter === "ALL") || (it.category === catFilter);
+        const isLow = Number(it.qty) <= Number(it.minThreshold);
+        let matchesStock = true;
+        if (stockFilter === "LOW") matchesStock = isLow;
+        if (stockFilter === "ADEQUATE") matchesStock = !isLow;
+
+        return matchesSearch && matchesCategory && matchesStock;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = "";
+        noMsg?.classList.remove("hidden");
+        return;
+      } else {
+        noMsg?.classList.add("hidden");
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        const isLow = Number(item.qty) <= Number(item.minThreshold);
+        return `
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-3 px-4 font-mono font-bold text-xs text-indigo-600">
+              ${escapeHtml(item.sku)}
+            </td>
+            <td class="py-3 px-4">
+              <div class="font-semibold text-slate-800">${escapeHtml(item.name)}</div>
+              ${isLow ? `
+                <span class="inline-flex items-center text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded mt-0.5">
+                  <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> Below threshold
+                </span>
+              ` : ''}
+            </td>
+            <td class="py-3 px-4 text-slate-500 text-xs">
+              <span class="px-2 py-0.5 rounded-md bg-slate-100">${escapeHtml(item.category)}</span>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <span class="font-extrabold text-sm ${isLow ? 'text-rose-600' : 'text-slate-900'}">${item.qty}</span>
+              <span class="text-[11px] text-slate-400">${item.unit}</span>
+            </td>
+            <td class="py-3 px-4 text-right font-medium text-slate-500 text-xs">
+              ${item.minThreshold} ${item.unit}
+            </td>
+            <td class="py-3 px-4 text-right font-medium text-slate-600 text-xs hidden md:table-cell">
+              ₹${Number(item.costPrice || 0).toFixed(2)}
+            </td>
+            <td class="py-3 px-4 text-right font-medium text-slate-900 text-xs hidden sm:table-cell">
+              ₹${Number(item.sellPrice || 0).toFixed(2)}
+            </td>
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center space-x-1.5">
+                <!-- Stock Adjustment button (Available to User, Admin, Superadmin) -->
+                <button onclick="openAdjustModal('${item.id}')" title="Stock IN / OUT" class="p-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors">
+                  <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                </button>
+
+                ${isAdmin() ? `
+                  <!-- Edit item -->
+                  <button onclick="openItemModal('${item.id}')" title="Edit Item" class="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                  </button>
+                  <!-- Delete item -->
+                  <button onclick="deleteItem('${item.id}')" title="Delete Item" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderLowStockView(container) {
+      const lowStockList = items.filter(it => Number(it.qty) <= Number(it.minThreshold));
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-500"></i>
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight" data-i18n="nav_low_stock">Low Stock Alerts</h1>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-500">Items reaching or falling below their designated safety stock threshold.</p>
+            </div>
+            
+            <button onclick="triggerLowStockPurchaseReport()" class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs sm:text-sm font-semibold hover:bg-slate-50 flex items-center space-x-2">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+              <span>Export Reorder List (CSV)</span>
+            </button>
+          </div>
+
+          ${lowStockList.length === 0 ? `
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-xs">
+              <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="check-check" class="w-8 h-8"></i>
+              </div>
+              <h3 class="text-lg font-bold text-slate-800">All Stock Levels are Healthy</h3>
+              <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">No items have fallen below their safety threshold. You will receive real-time notifications here when inventory runs low.</p>
+            </div>
+          ` : `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${lowStockList.map(it => {
+                const deficit = Math.max(0, Number(it.minThreshold) - Number(it.qty));
+                return `
+                  <div class="bg-white rounded-3xl border-2 border-rose-200/80 p-5 shadow-xs flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-rose-500/10 rounded-bl-full pointer-events-none"></div>
+
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">${it.sku}</span>
+                        <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">Deficit: -${deficit} ${it.unit}</span>
+                      </div>
+
+                      <h3 class="font-bold text-slate-900 text-base mb-1">${escapeHtml(it.name)}</h3>
+                      <p class="text-xs text-slate-400">${it.category}</p>
+
+                      <div class="my-4 bg-rose-50/50 rounded-2xl p-3 border border-rose-100 flex items-center justify-around text-center">
+                        <div>
+                          <p class="text-[10px] text-slate-400 uppercase font-semibold">Available</p>
+                          <p class="text-xl font-black text-rose-600">${it.qty} <span class="text-xs font-normal">${it.unit}</span></p>
+                        </div>
+                        <div class="h-8 w-px bg-rose-200"></div>
+                        <div>
+                          <p class="text-[10px] text-slate-400 uppercase font-semibold">Min Level</p>
+                          <p class="text-xl font-black text-slate-700">${it.minThreshold} <span class="text-xs font-normal">${it.unit}</span></p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="pt-2 flex items-center space-x-2">
+                      <button onclick="openAdjustModal('${it.id}')" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                        <span>+ Restock Item</span>
+                      </button>
+                      ${isAdmin() ? `
+                        <button onclick="openItemModal('${it.id}')" class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">
+                          <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderUsersView(container) {
+      if (!isAdmin() && !isSuperAdmin()) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-10 text-center border border-slate-200">
+            <i data-lucide="shield-alert" class="w-12 h-12 text-rose-500 mx-auto mb-3"></i>
+            <h2 class="text-lg font-bold text-slate-900">Restricted Access</h2>
+            <p class="text-xs text-slate-500 mt-1">Only Administrators and Super Admin can access the user management console.</p>
+            <button onclick="navigate('dashboard')" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold">Back to Dashboard</button>
+          </div>
+        `;
+        return;
+      }
+
+      const pendingUsers = users.filter(u => u.status === "PENDING");
+      const activeUsers = users.filter(u => u.status !== "PENDING");
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight" data-i18n="nav_users">User & Access Management</h1>
+              <p class="text-xs sm:text-sm text-slate-500">Super Admin can approve public registrations, assign roles, and create accounts.</p>
+            </div>
+            
+            ${isSuperAdmin() ? `
+              <button onclick="openModal('createUserModal')" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-200 flex items-center space-x-1.5 transition-colors shrink-0">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span data-i18n="create_user_title">Add Admin / User</span>
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- Pending Approvals Section (High Priority for Super Admin) -->
+          <div class="bg-white rounded-3xl border-2 ${pendingUsers.length > 0 ? 'border-amber-300 bg-amber-50/10' : 'border-slate-200/80'} p-5 shadow-xs">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                  ${pendingUsers.length}
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900" data-i18n="pending_users">Pending Registrations for Approval</h3>
+                  <p class="text-xs text-slate-400">Users who registered through the mobile login screen</p>
+                </div>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${pendingUsers.length > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}">
+                ${pendingUsers.length} Requests
+              </span>
+            </div>
+
+            ${pendingUsers.length === 0 ? `
+              <div class="text-center py-6 text-slate-400 text-xs">
+                <i data-lucide="check-circle" class="w-8 h-8 text-emerald-400 mx-auto mb-1"></i>
+                No pending registrations waiting for review.
+              </div>
+            ` : `
+              <div class="space-y-3">
+                ${pendingUsers.map(u => `
+                  <div class="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <span class="font-bold text-sm text-slate-900">${escapeHtml(u.name)}</span>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">Requested: ${u.role}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(u.email)}</span>
+                      </div>
+                      <p class="text-xs text-slate-600 mt-1">
+                        <strong class="text-slate-400">Department / Reason:</strong> ${escapeHtml(u.reason || "Not specified")}
+                      </p>
+                      <p class="text-[10px] text-slate-400 mt-0.5">Submitted: ${formatRelativeTime(u.createdAt)} &bull; Preferred Lang: ${u.lang?.toUpperCase() || 'EN'}</p>
+                    </div>
+
+                    ${isSuperAdmin() ? `
+                      <div class="flex items-center space-x-2 shrink-0">
+                        <button onclick="approveUserRegistration('${u.id}', true)" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center space-x-1 shadow-sm transition-colors">
+                          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                          <span>Approve & Activate</span>
+                        </button>
+                        <button onclick="approveUserRegistration('${u.id}', false)" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-colors">
+                          Reject
+                        </button>
+                      </div>
+                    ` : `
+                      <span class="text-xs text-slate-400 italic">Super Admin approval required</span>
+                    `}
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
+
+          <!-- Existing Active Users List -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Active System Accounts</h3>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs sm:text-sm">
+                <thead>
+                  <tr class="border-b border-slate-100 text-slate-400 uppercase text-[11px] font-semibold">
+                    <th class="pb-3 px-3">User</th>
+                    <th class="pb-3 px-3">Role</th>
+                    <th class="pb-3 px-3">Language</th>
+                    <th class="pb-3 px-3">Status</th>
+                    ${isSuperAdmin() ? '<th class="pb-3 px-3 text-center">Manage</th>' : ''}
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${activeUsers.map(u => `
+                    <tr class="hover:bg-slate-50/70 transition-colors">
+                      <td class="py-3 px-3">
+                        <div class="font-semibold text-slate-800">${escapeHtml(u.name)}</div>
+                        <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(u.email)}</span>
+                      </td>
+                      <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          u.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' :
+                          u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-700'
+                        }">
+                          ${u.role}
+                        </span>
+                      </td>
+                      <td class="py-3 px-3 text-xs uppercase font-semibold text-slate-500">
+                        ${u.lang || 'en'}
+                      </td>
+                      <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${u.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+                          ${u.status}
+                        </span>
+                      </td>
+                      ${isSuperAdmin() ? `
+                        <td class="py-3 px-3 text-center">
+                          ${u.id !== currentUser.id ? `
+                            <button onclick="deleteUserAccount('${u.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50" title="Delete Account">
+                              <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                          ` : '<span class="text-[10px] text-slate-400 font-medium">Current User</span>'}
+                        </td>
+                      ` : ''}
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBackupView(container) {
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <i data-lucide="hard-drive" class="w-6 h-6 text-indigo-600"></i>
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight" data-i18n="nav_backup">Google Drive & Data Backup</h1>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-500">Automated periodic snapshot backups to Google Drive and local JSON export/restore.</p>
+            </div>
+            
+            <button onclick="triggerDriveSync()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-200 flex items-center space-x-2 transition-colors">
+              <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+              <span data-i18n="btn_backup_now">Sync to Google Drive Now</span>
+            </button>
+          </div>
+
+          <!-- Google Drive Configuration Card -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <i data-lucide="cloud-check" class="w-7 h-7"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-slate-900" data-i18n="drive_connected">Google Drive Connected (OAuth 2.0)</h3>
+                  <p class="text-xs text-slate-400">Authenticated via service account &bull; Scope: drive.file</p>
+                </div>
+              </div>
+              <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full w-max">Active & Syncing</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-slate-50 rounded-2xl p-4">
+                <span class="text-xs text-slate-400 uppercase font-semibold" data-i18n="drive_folder_label">Drive Destination</span>
+                <p class="text-sm font-bold font-mono text-slate-800 mt-1">📁 /${driveConfig.targetFolder}/</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Creates versioned JSON & CSV snapshots</p>
+              </div>
+
+              <div class="bg-slate-50 rounded-2xl p-4">
+                <span class="text-xs text-slate-400 uppercase font-semibold" data-i18n="sync_frequency">Sync Frequency</span>
+                <select id="driveFrequencySelect" onchange="updateDriveFrequency(this.value)" class="mt-1 w-full bg-white border border-slate-200 text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none">
+                  <option value="realtime" ${driveConfig.syncFrequency === 'realtime' ? 'selected' : ''}>Real-Time (On Every Change)</option>
+                  <option value="hourly" ${driveConfig.syncFrequency === 'hourly' ? 'selected' : ''}>Hourly Automatic Snapshot</option>
+                  <option value="daily" ${driveConfig.syncFrequency === 'daily' ? 'selected' : ''}>Daily Scheduled (12:00 AM)</option>
+                </select>
+              </div>
+
+              <div class="bg-slate-50 rounded-2xl p-4">
+                <span class="text-xs text-slate-400 uppercase font-semibold" data-i18n="drive_last_synced">Last Backup</span>
+                <p class="text-sm font-bold text-emerald-700 mt-1" id="driveLastSyncDisplay">${formatRelativeTime(driveConfig.lastSyncTime)}</p>
+                <p class="text-[11px] text-slate-400 mt-0.5" id="driveFullTimestamp">${new Date(driveConfig.lastSyncTime).toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div class="pt-2 flex flex-wrap gap-3">
+              <button onclick="downloadJsonBackup()" class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-2">
+                <i data-lucide="download" class="w-4 h-4 text-indigo-600"></i>
+                <span data-i18n="download_json">Download Local JSON Backup</span>
+              </button>
+
+              <label class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-2 cursor-pointer">
+                <i data-lucide="upload" class="w-4 h-4 text-emerald-600"></i>
+                <span data-i18n="restore_json">Restore Data from JSON</span>
+                <input type="file" id="jsonFileInput" accept=".json" onchange="handleRestoreFile(event)" class="hidden">
+              </label>
+
+              <button onclick="resetToFactoryDemo()" class="px-4 py-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold ml-auto">
+                Reset to Demo Seeds
+              </button>
+            </div>
+          </div>
+
+          <!-- Activity Audit Log -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs">
+            <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">Sync & Activity Audit Logs</h3>
+            <div class="space-y-2 max-h-72 overflow-y-auto">
+              ${logs.map(lg => `
+                <div class="p-3 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center justify-between text-xs">
+                  <div>
+                    <span class="font-bold text-slate-800">${escapeHtml(lg.action)}</span>
+                    <span class="text-slate-400 ml-2">&bull; by ${escapeHtml(lg.user || 'System')}</span>
+                    <p class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(lg.note || '')}</p>
+                  </div>
+                  <span class="text-[10px] text-slate-400 font-mono shrink-0">${formatRelativeTime(lg.timestamp)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSettingsView(container) {
+      container.innerHTML = `
+        <div class="max-w-2xl mx-auto space-y-6">
+          <div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight" data-i18n="settings_title">Application Settings</h1>
+            <p class="text-xs sm:text-sm text-slate-500">Configure language, user preferences, and real-time cloud parameters.</p>
+          </div>
+
+          <!-- Language Selector Box -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <i data-lucide="languages" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900" data-i18n="lang_preference">Language Preference (ભાષા / भाषा)</h3>
+                <p class="text-xs text-slate-400">Choose between English, Gujarati, or Hindi</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <button onclick="changeLanguage('en')" class="p-3 rounded-2xl border-2 text-left transition-all ${currentLang === 'en' ? 'border-indigo-600 bg-indigo-50/40 text-indigo-950 font-bold' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}">
+                <p class="text-sm font-bold">English</p>
+                <p class="text-xs text-slate-400 mt-0.5">Default System</p>
+              </button>
+              <button onclick="changeLanguage('gu')" class="p-3 rounded-2xl border-2 text-left transition-all ${currentLang === 'gu' ? 'border-indigo-600 bg-indigo-50/40 text-indigo-950 font-bold' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}">
+                <p class="text-sm font-bold">ગુજરાતી</p>
+                <p class="text-xs text-slate-400 mt-0.5">Gujarati Language</p>
+              </button>
+              <button onclick="changeLanguage('hi')" class="p-3 rounded-2xl border-2 text-left transition-all ${currentLang === 'hi' ? 'border-indigo-600 bg-indigo-50/40 text-indigo-950 font-bold' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}">
+                <p class="text-sm font-bold">हिंदी</p>
+                <p class="text-xs text-slate-400 mt-0.5">Hindi Language</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Current User Profile Card -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider">Current Session</h3>
+            ${currentUser ? `
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center font-bold text-lg">
+                  ${currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-900">${escapeHtml(currentUser.name)}</h4>
+                  <p class="text-xs text-slate-500 font-mono">${escapeHtml(currentUser.email)}</p>
+                  <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">
+                    Role: ${currentUser.role}
+                  </span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100">
+                <button onclick="logoutUser()" class="px-4 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold flex items-center space-x-2">
+                  <i data-lucide="log-out" class="w-4 h-4"></i>
+                  <span data-i18n="btn_logout">Logout</span>
+                </button>
+              </div>
+            ` : `
+              <p class="text-xs text-slate-500">You are browsing as Guest. Log in to access your designated privileges.</p>
+              <button onclick="navigate('login')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">
+                Go to Login
+              </button>
+            `}
+          </div>
+
+          <!-- Real Scenario Deployment Step-by-Step Info Guide -->
+          <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center space-x-2 text-indigo-400">
+              <i data-lucide="help-circle" class="w-5 h-5"></i>
+              <h3 class="font-bold text-base">Step-by-Step Guide for Real Production Setup</h3>
+            </div>
+            <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+              <p><strong>1. Live Google Drive Sync in Production:</strong> Create a Google Cloud project &rarr; Enable Google Drive API &rarr; Set up OAuth 2.0 Client ID or Service Account key &rarr; Exchange access tokens to push JSON/CSV backups directly to the designated Drive folder ID.</p>
+              <p><strong>2. Super Admin Approval Lifecycle:</strong> Staff members tap "Register" from the mobile home screen. Their request is logged with 'PENDING' status. The Super Admin logs in, reviews the applicant's department/reason under the 'User Management' tab, and approves them with a single click.</p>
+              <p><strong>3. Low Stock Notification Triggers:</strong> Each item defines a "Min Alert" threshold. As items are issued (Stock OUT), the app immediately flags items falling below that value with visual badges, toast alerts, and inclusion in the reorder export.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLoginView(container) {
+      container.innerHTML = `
+        <div class="max-w-md mx-auto my-6 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xl">
+          <div class="text-center mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-indigo-100">
+              <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">Sign In to SmartStock</h2>
+            <p class="text-xs text-slate-500 mt-1">Multi-role access: Super Admin, Admin, and User</p>
+          </div>
+
+          <form onsubmit="handleManualLogin(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email / Login ID</label>
+              <input type="email" id="loginEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="name@store.com">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+              <input type="password" id="loginPassword" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-200 transition-colors">
+              Sign In
+            </button>
+          </form>
+
+          <div class="mt-4 pt-4 border-t border-slate-100 text-center">
+            <p class="text-xs text-slate-500">Don't have an account yet?</p>
+            <button onclick="openModal('registerModal')" class="mt-1 text-xs font-bold text-indigo-600 hover:underline">
+              Register New Account (Requires Super Admin Approval)
+            </button>
+          </div>
+
+          <!-- Quick 1-Click Demo Logins -->
+          <div class="mt-6 pt-5 border-t border-slate-100">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3" data-i18n="demo_accounts">Quick Demo Logins</p>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="quickLoginDemo('usr_super')" class="p-2 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 text-center transition-all">
+                <span class="block text-xs font-bold">Super Admin</span>
+                <span class="text-[9px] text-purple-400">Full Access</span>
+              </button>
+              <button onclick="quickLoginDemo('usr_admin')" class="p-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-center transition-all">
+                <span class="block text-xs font-bold">Admin</span>
+                <span class="text-[9px] text-indigo-400">Manage Stock</span>
+              </button>
+              <button onclick="quickLoginDemo('usr_staff')" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-center transition-all">
+                <span class="block text-xs font-bold">Standard User</span>
+                <span class="text-[9px] text-slate-400">View & Issue</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleManualLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("loginPassword").value;
+
+      const user = users.find(u => u.email.toLowerCase() === email && u.password === pass);
+
+      if (!user) {
+        showToast("Invalid email or password", "error");
+        return;
+      }
+
+      if (user.status === "PENDING") {
+        showToast("Your registration is still pending Super Admin approval. Please contact management.", "warning");
+        return;
+      }
+
+      if (user.status === "REJECTED") {
+        showToast("Your registration request was declined. Contact Super Admin.", "error");
+        return;
+      }
+
+      currentUser = user;
+      setStoredData(STORAGE_KEY_AUTH, currentUser);
+      if (user.lang) changeLanguage(user.lang);
+      showToast(`Welcome back, ${user.name}! (${user.role})`, "success");
+      updateHeaderBadges();
+      navigate("dashboard");
+    }
+
+    function quickLoginDemo(userId) {
+      const u = users.find(x => x.id === userId);
+      if (u) {
+        currentUser = u;
+        setStoredData(STORAGE_KEY_AUTH, currentUser);
+        if (u.lang) changeLanguage(u.lang);
+        showToast(`Logged in as ${u.name} (${u.role})`, "success");
+        updateHeaderBadges();
+        navigate("dashboard");
+      }
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      localStorage.removeItem(STORAGE_KEY_AUTH);
+      updateHeaderBadges();
+      showToast("Logged out successfully", "info");
+      navigate("dashboard");
+    }
+
+    function handleRegistrationSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById("regName").value.trim();
+      const email = document.getElementById("regEmail").value.trim().toLowerCase();
+      const password = document.getElementById("regPassword").value;
+      const role = document.getElementById("regRole").value;
+      const reason = document.getElementById("regReason").value.trim();
+
+      if (users.some(u => u.email.toLowerCase() === email)) {
+        showToast("A user with this email already exists!", "error");
+        return;
+      }
+
+      const newUser = {
+        id: "usr_" + Date.now(),
+        name,
+        email,
+        password,
+        role,
+        reason,
+        status: "PENDING",
+        lang: currentLang,
+        createdAt: new Date().toISOString()
+      };
+
+      users.push(newUser);
+      setStoredData(STORAGE_KEY_USERS, users);
+
+      // Add to log
+      addSystemLog("User Registered", name, `Submitted pending request for role: ${role}`);
+
+      closeModal("registerModal");
+      document.getElementById("registerForm").reset();
+
+      showToast(t("toast_registered"), "success");
+      updateHeaderBadges();
+      if (currentView === "users") renderUsersView(document.getElementById("mainContainer"));
+    }
+
+    function handleDirectUserCreate(e) {
+      e.preventDefault();
+      if (!isSuperAdmin()) return;
+
+      const name = document.getElementById("directName").value.trim();
+      const email = document.getElementById("directEmail").value.trim().toLowerCase();
+      const password = document.getElementById("directPassword").value;
+      const role = document.getElementById("directRole").value;
+      const lang = document.getElementById("directLang").value;
+
+      if (users.some(u => u.email.toLowerCase() === email)) {
+        showToast("Email is already registered!", "error");
+        return;
+      }
+
+      const newUser = {
+        id: "usr_" + Date.now(),
+        name,
+        email,
+        password,
+        role,
+        reason: "Directly added by Super Admin",
+        status: "APPROVED",
+        lang: lang || "en",
+        createdAt: new Date().toISOString()
+      };
+
+      users.push(newUser);
+      setStoredData(STORAGE_KEY_USERS, users);
+      addSystemLog("Direct User Created", currentUser.name, `Created ${role} account: ${email}`);
+
+      closeModal("createUserModal");
+      document.getElementById("directUserForm").reset();
+      showToast("New active user created successfully", "success");
+      updateHeaderBadges();
+      renderUsersView(document.getElementById("mainContainer"));
+    }
+
+    function approveUserRegistration(userId, isApproved) {
+      if (!isSuperAdmin()) return;
+      const idx = users.findIndex(u => u.id === userId);
+      if (idx === -1) return;
+
+      const user = users[idx];
+      user.status = isApproved ? "APPROVED" : "REJECTED";
+      setStoredData(STORAGE_KEY_USERS, users);
+
+      addSystemLog(
+        isApproved ? "User Approved" : "User Rejected",
+        currentUser.name,
+        `${isApproved ? 'Approved' : 'Rejected'} registration for ${user.email} (${user.role})`
+      );
+
+      showToast(t("toast_approved"), "success");
+      updateHeaderBadges();
+      renderUsersView(document.getElementById("mainContainer"));
+    }
+
+    function deleteUserAccount(userId) {
+      if (!isSuperAdmin()) return;
+      users = users.filter(u => u.id !== userId);
+      setStoredData(STORAGE_KEY_USERS, users);
+      showToast("User deleted", "info");
+      updateHeaderBadges();
+      renderUsersView(document.getElementById("mainContainer"));
+    }
+
+    function openItemModal(itemId = null) {
+      if (!isAdmin()) {
+        showToast("Admin access required to modify catalog", "warning");
+        return;
+      }
+
+      const form = document.getElementById("itemForm");
+      form.reset();
+
+      if (itemId) {
+        const item = items.find(it => it.id === itemId);
+        if (item) {
+          document.getElementById("itemModalTitle").innerText = t("modal_edit_item");
+          document.getElementById("itemEditId").value = item.id;
+          document.getElementById("itemNameInput").value = item.name;
+          document.getElementById("itemSkuInput").value = item.sku;
+          document.getElementById("itemCategoryInput").value = item.category;
+          document.getElementById("itemQtyInput").value = item.qty;
+          document.getElementById("itemUnitInput").value = item.unit;
+          document.getElementById("itemMinInput").value = item.minThreshold;
+          document.getElementById("itemCostInput").value = item.costPrice || 0;
+          document.getElementById("itemSellInput").value = item.sellPrice || 0;
+        }
+      } else {
+        document.getElementById("itemModalTitle").innerText = t("modal_add_item");
+        document.getElementById("itemEditId").value = "";
+      }
+
+      openModal("itemModal");
+    }
+
+    function handleItemFormSubmit(e) {
+      e.preventDefault();
+      if (!isAdmin()) return;
+
+      const editId = document.getElementById("itemEditId").value;
+      const name = document.getElementById("itemNameInput").value.trim();
+      const sku = document.getElementById("itemSkuInput").value.trim().toUpperCase();
+      const category = document.getElementById("itemCategoryInput").value;
+      const qty = parseInt(document.getElementById("itemQtyInput").value, 10) || 0;
+      const unit = document.getElementById("itemUnitInput").value;
+      const minThreshold = parseInt(document.getElementById("itemMinInput").value, 10) || 1;
+      const costPrice = parseFloat(document.getElementById("itemCostInput").value) || 0;
+      const sellPrice = parseFloat(document.getElementById("itemSellInput").value) || 0;
+
+      if (editId) {
+        // Update item
+        const idx = items.findIndex(it => it.id === editId);
+        if (idx !== -1) {
+          items[idx] = {
+            ...items[idx],
+            name,
+            sku,
+            category,
+            qty,
+            unit,
+            minThreshold,
+            costPrice,
+            sellPrice,
+            updatedAt: new Date().toISOString()
+          };
+          addSystemLog("Item Updated", currentUser?.name || "Admin", `Updated item ${name} (${sku})`);
+        }
+      } else {
+        // Create new item
+        const newItem = {
+          id: "itm_" + Date.now(),
+          name,
+          sku,
+          category,
+          qty,
+          unit,
+          minThreshold,
+          costPrice,
+          sellPrice,
+          updatedAt: new Date().toISOString()
+        };
+        items.unshift(newItem);
+        addSystemLog("Item Added", currentUser?.name || "Admin", `Created new item ${name} (${sku})`);
+      }
+
+      setStoredData(STORAGE_KEY_ITEMS, items);
+      closeModal("itemModal");
+      showToast(t("toast_saved"), "success");
+      updateHeaderBadges();
+      renderCurrentView();
+
+      // Trigger realtime drive sync if enabled
+      if (driveConfig.syncFrequency === "realtime") {
+        triggerDriveSync(false);
+      }
+    }
+
+    function deleteItem(itemId) {
+      if (!isAdmin()) return;
+      const itm = items.find(i => i.id === itemId);
+      items = items.filter(i => i.id !== itemId);
+      setStoredData(STORAGE_KEY_ITEMS, items);
+      addSystemLog("Item Deleted", currentUser?.name || "Admin", `Deleted ${itm?.name || itemId}`);
+      showToast(t("toast_deleted"), "info");
+      updateHeaderBadges();
+      renderCurrentView();
+    }
+
+    function openAdjustModal(itemId) {
+      adjustActiveItem = items.find(it => it.id === itemId);
+      if (!adjustActiveItem) return;
+
+      document.getElementById("adjustItemName").innerText = `${adjustActiveItem.name} (${adjustActiveItem.sku})`;
+      document.getElementById("adjustCurrentQty").innerText = `${adjustActiveItem.qty} ${adjustActiveItem.unit}`;
+      document.getElementById("adjustAmountInput").value = "1";
+      document.getElementById("adjustNotesInput").value = "";
+      setAdjustType("IN");
+
+      openModal("adjustModal");
+    }
+
+    function setAdjustType(type) {
+      adjustType = type;
+      const btnIn = document.getElementById("btnStockIn");
+      const btnOut = document.getElementById("btnStockOut");
+
+      if (type === "IN") {
+        btnIn.className = "py-2 rounded-xl text-xs font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center space-x-1.5";
+        btnOut.className = "py-2 rounded-xl text-xs font-bold border-2 border-transparent bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700 flex items-center justify-center space-x-1.5";
+      } else {
+        btnOut.className = "py-2 rounded-xl text-xs font-bold border-2 border-rose-500 bg-rose-50 text-rose-700 flex items-center justify-center space-x-1.5";
+        btnIn.className = "py-2 rounded-xl text-xs font-bold border-2 border-transparent bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 flex items-center justify-center space-x-1.5";
+      }
+    }
+
+    function submitStockAdjustment() {
+      if (!adjustActiveItem) return;
+
+      const amt = parseInt(document.getElementById("adjustAmountInput").value, 10);
+      const notes = document.getElementById("adjustNotesInput").value.trim();
+
+      if (isNaN(amt) || amt <= 0) {
+        showToast("Please enter a valid quantity greater than zero", "error");
+        return;
+      }
+
+      const idx = items.findIndex(i => i.id === adjustActiveItem.id);
+      if (idx === -1) return;
+
+      let newQty = Number(items[idx].qty);
+      if (adjustType === "IN") {
+        newQty += amt;
+      } else {
+        if (newQty < amt) {
+          showToast(`Cannot dispatch ${amt} ${items[idx].unit}. Only ${newQty} in stock!`, "error");
+          return;
+        }
+        newQty -= amt;
+      }
+
+      items[idx].qty = newQty;
+      items[idx].updatedAt = new Date().toISOString();
+      setStoredData(STORAGE_KEY_ITEMS, items);
+
+      const actionText = adjustType === "IN" ? `+ Stock IN: ${amt}` : `- Stock OUT: ${amt}`;
+      addSystemLog(actionText, currentUser?.name || "Guest", `${items[idx].name} &bull; ${notes || 'Inventory movement'}`);
+
+      // Check for low stock alert
+      if (newQty <= items[idx].minThreshold) {
+        showToast(`Warning: ${items[idx].name} is now below threshold (${newQty} ${items[idx].unit} remaining)!`, "warning");
+      } else {
+        showToast("Stock quantity adjusted successfully", "success");
+      }
+
+      closeModal("adjustModal");
+      updateHeaderBadges();
+      renderCurrentView();
+
+      if (driveConfig.syncFrequency === "realtime") {
+        triggerDriveSync(false);
+      }
+    }
+
+    function triggerDriveSync(showPopup = true) {
+      const icon = document.getElementById("sidebarSyncIcon");
+      if (icon) icon.classList.add("animate-spin");
+
+      // Simulate network OAuth token handshake and Google Drive upload payload
+      setTimeout(() => {
+        if (icon) icon.classList.remove("animate-spin");
+
+        driveConfig.lastSyncTime = new Date().toISOString();
+        setStoredData(STORAGE_KEY_BACKUP_SETTINGS, driveConfig);
+
+        addSystemLog("Google Drive Sync", currentUser?.name || "System", `Snapshot pushed to /${driveConfig.targetFolder}/`);
+
+        if (showPopup) {
+          showToast(t("toast_backup_success"), "success");
+        }
+
+        const disp = document.getElementById("driveLastSyncDisplay");
+        if (disp) disp.innerText = formatRelativeTime(driveConfig.lastSyncTime);
+        const fullDisp = document.getElementById("driveFullTimestamp");
+        if (fullDisp) fullDisp.innerText = new Date(driveConfig.lastSyncTime).toLocaleString();
+
+        updateHeaderBadges();
+      }, 700);
+    }
+
+    function updateDriveFrequency(val) {
+      driveConfig.syncFrequency = val;
+      setStoredData(STORAGE_KEY_BACKUP_SETTINGS, driveConfig);
+      showToast(`Drive backup schedule set to ${val}`, "info");
+    }
+
+    function downloadJsonBackup() {
+      const fullDatabase = {
+        version: "2.0",
+        appName: "SmartStock",
+        exportTimestamp: new Date().toISOString(),
+        items,
+        users,
+        logs,
+        driveConfig
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullDatabase, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `SmartStock_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      showToast("Database JSON backup downloaded", "success");
+    }
+
+    function handleRestoreFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.items && Array.isArray(imported.items)) {
+            items = imported.items;
+            setStoredData(STORAGE_KEY_ITEMS, items);
+          }
+          if (imported.users && Array.isArray(imported.users)) {
+            users = imported.users;
+            setStoredData(STORAGE_KEY_USERS, users);
+          }
+          if (imported.logs && Array.isArray(imported.logs)) {
+            logs = imported.logs;
+            setStoredData(STORAGE_KEY_LOGS, logs);
+          }
+          showToast(t("toast_restore_success"), "success");
+          updateHeaderBadges();
+          renderCurrentView();
+        } catch (err) {
+          showToast("Failed to parse JSON backup file", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetToFactoryDemo() {
+      items = [...INITIAL_ITEMS];
+      users = [...INITIAL_USERS];
+      logs = [...INITIAL_LOGS];
+      setStoredData(STORAGE_KEY_ITEMS, items);
+      setStoredData(STORAGE_KEY_USERS, users);
+      setStoredData(STORAGE_KEY_LOGS, logs);
+      showToast("Reset to sample demo records", "info");
+      updateHeaderBadges();
+      renderCurrentView();
+    }
+
+    function triggerLowStockPurchaseReport() {
+      const lowStockList = items.filter(it => Number(it.qty) <= Number(it.minThreshold));
+      if (lowStockList.length === 0) {
+        showToast("No low stock items to export!", "info");
+        return;
+      }
+
+      let csv = "SKU,Item Name,Category,Current Qty,Min Threshold,Deficit,Cost Price (INR)\n";
+      lowStockList.forEach(it => {
+        const def = Math.max(0, it.minThreshold - it.qty);
+        csv += `"${it.sku}","${it.name}","${it.category}",${it.qty},${it.minThreshold},${def},${it.costPrice || 0}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Reorder_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast("Reorder CSV Report exported", "success");
+    }
+
+    function addSystemLog(action, user, note) {
+      logs.unshift({
+        id: "log_" + Date.now(),
+        action,
+        user,
+        timestamp: new Date().toISOString(),
+        note
+      });
+      // Keep recent 50 logs
+      if (logs.length > 50) logs.pop();
+      setStoredData(STORAGE_KEY_LOGS, logs);
+    }
+
+    function updateHeaderBadges() {
+      const lowStockCount = items.filter(it => Number(it.qty) <= Number(it.minThreshold)).length;
+      const pendingCount = users.filter(u => u.status === "PENDING").length;
+
+      // Bell badge
+      const bell = document.getElementById("lowStockBadge");
+      const mobBadge = document.getElementById("mobileLowStockBadge");
+      const navCounter = document.getElementById("lowStockNavCounter");
+
+      if (lowStockCount > 0) {
+        if (bell) { bell.innerText = lowStockCount; bell.classList.remove("hidden"); }
+        if (mobBadge) { mobBadge.innerText = lowStockCount; mobBadge.classList.remove("hidden"); }
+        if (navCounter) navCounter.innerText = lowStockCount;
+      } else {
+        if (bell) bell.classList.add("hidden");
+        if (mobBadge) mobBadge.classList.add("hidden");
+        if (navCounter) navCounter.innerText = "0";
+      }
+
+      // Pending users badges
+      const pBadge = document.getElementById("pendingApprovalsBadge");
+      const mPBadge = document.getElementById("mobilePendingBadge");
+      if (pendingCount > 0 && isSuperAdmin()) {
+        if (pBadge) { pBadge.innerText = pendingCount; pBadge.classList.remove("hidden"); }
+        if (mPBadge) { mPBadge.innerText = pendingCount; mPBadge.classList.remove("hidden"); }
+      } else {
+        if (pBadge) pBadge.classList.add("hidden");
+        if (mPBadge) mPBadge.classList.add("hidden");
+      }
+
+      // Header Role & Auth Container
+      const roleBadge = document.getElementById("headerRoleBadge");
+      const authContainer = document.getElementById("authHeaderContainer");
+
+      if (currentUser) {
+        if (roleBadge) {
+          roleBadge.innerText = currentUser.role;
+          roleBadge.className = currentUser.role === 'SUPERADMIN' 
+            ? "hidden sm:inline-block ml-2 text-xs font-bold px-2 py-0.5 bg-purple-100 text-purple-800 rounded" 
+            : currentUser.role === 'ADMIN' 
+              ? "hidden sm:inline-block ml-2 text-xs font-bold px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded" 
+              : "hidden sm:inline-block ml-2 text-xs font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded";
+        }
+
+        if (authContainer) {
+          authContainer.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <button onclick="navigate('settings')" class="flex items-center space-x-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl hover:bg-slate-100 text-slate-700">
+                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
+                  ${currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <span class="hidden lg:inline text-xs font-semibold">${escapeHtml(currentUser.name.split(' ')[0])}</span>
+              </button>
+            </div>
+          `;
+        }
+      } else {
+        if (roleBadge) {
+          roleBadge.innerText = "Guest";
+          roleBadge.className = "hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 bg-slate-100 rounded text-slate-500";
+        }
+        if (authContainer) {
+          authContainer.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <button onclick="navigate('login')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+                ${t('btn_login')}
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      // Sidebar permission visibility
+      const adminNav = document.getElementById("adminNavItems");
+      if (adminNav) {
+        adminNav.style.display = (isAdmin() || isSuperAdmin()) ? "block" : "none";
+      }
+
+      lucide.createIcons();
+    }
+
+    function toggleLowStockDrawer() {
+      const drawer = document.getElementById("lowStockDrawer");
+      const isClosed = drawer.classList.contains("translate-x-full");
+
+      if (isClosed) {
+        // Populate items
+        const list = document.getElementById("lowStockDrawerList");
+        const lowItems = items.filter(it => Number(it.qty) <= Number(it.minThreshold));
+
+        if (lowItems.length === 0) {
+          list.innerHTML = `<p class="text-xs text-center text-slate-400 py-8">No low stock items! All quantities are healthy.</p>`;
+        } else {
+          list.innerHTML = lowItems.map(it => `
+            <div class="p-3 rounded-2xl border border-rose-200 bg-rose-50/40 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-800">${escapeHtml(it.name)}</p>
+                <p class="text-[10px] text-slate-400">SKU: ${it.sku} &bull; Min: ${it.minThreshold} ${it.unit}</p>
+                <span class="text-xs font-extrabold text-rose-600">${it.qty} ${it.unit} in stock</span>
+              </div>
+              <button onclick="openAdjustModal('${it.id}'); toggleLowStockDrawer()" class="px-2.5 py-1.5 bg-indigo-600 text-white text-[11px] font-semibold rounded-lg">
+                + Restock
+              </button>
+            </div>
+          `).join('');
+        }
+        drawer.classList.remove("translate-x-full");
+      } else {
+        drawer.classList.add("translate-x-full");
+      }
+      lucide.createIcons();
+    }
+
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) {
+        m.classList.remove("hidden");
+        m.classList.add("flex");
+      }
+      lucide.createIcons();
+    }
+
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) {
+        m.classList.add("hidden");
+        m.classList.remove("flex");
+      }
+    }
+
+    function formatRelativeTime(isoString) {
+      if (!isoString) return "Never";
+      const diffMs = Date.now() - new Date(isoString).getTime();
+      const mins = Math.floor(diffMs / 60000);
+      if (mins < 1) return "Just now";
+      if (mins < 60) return `${mins}m ago`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}h ago`;
+      return new Date(isoString).toLocaleDateString();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    window.onload = function() {
+      // Default to Super Admin for seamless preview experience if none logged in
+      if (!currentUser) {
+        currentUser = users.find(u => u.role === "SUPERADMIN") || users[0];
+        setStoredData(STORAGE_KEY_AUTH, currentUser);
+      }
+
+      if (currentUser && currentUser.lang) {
+        currentLang = currentUser.lang;
+      }
+
+      applyLocalization();
+      updateHeaderBadges();
+      navigate("dashboard");
+
+      // Auto periodic Google Drive backup simulation (Every 60 minutes)
+      setInterval(() => {
+        if (driveConfig.autoSync) {
+          triggerDriveSync(false);
+        }
+      }, 1000 * 60 * 60);
+    };
+  </script>
+</body>
+</html>

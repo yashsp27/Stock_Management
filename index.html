@@ -29,9 +29,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col font-sans">
 
-  <!-- ========================================== -->
-  <!-- 1. HEADER & TOP NAVIGATION BAR             -->
-  <!-- ========================================== -->
+  <!-- 1. HEADER & TOP NAVIGATION BAR -->
   <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
@@ -68,9 +66,7 @@
     </div>
   </header>
 
-  <!-- ========================================== -->
-  <!-- 2. AUTHENTICATION (UNIFIED LOGIN & REG)    -->
-  <!-- ========================================== -->
+  <!-- 2. AUTHENTICATION (UNIFIED LOGIN & REGISTRATION) -->
   <div id="authSection" class="flex-1 flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-6 md:p-8">
       
@@ -119,7 +115,7 @@
         </div>
       </div>
 
-      <!-- Self Registration Form (Goes to Super Admin / Retailer for Approval) -->
+      <!-- Registration Form (Approved by Super Admin / Company Admin) -->
       <div id="registerView" class="hidden">
         <div class="text-center mb-6">
           <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
@@ -167,9 +163,7 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 3. DASHBOARD MAIN INTERFACE                -->
-  <!-- ========================================== -->
+  <!-- 3. DASHBOARD MAIN INTERFACE -->
   <main id="dashboardSection" class="hidden flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 pb-24 space-y-6">
 
     <!-- NAVIGATION TABS -->
@@ -218,7 +212,6 @@
 
     <!-- TAB 1: POS BILLING WITH DEPOSIT & CREDIT (DUE) -->
     <div id="tabContent_pos" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
       <!-- Catalog Selection (7 Cols) -->
       <div class="lg:col-span-7 space-y-4">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
@@ -410,7 +403,6 @@
         </div>
       </div>
 
-      <!-- Detailed Sales Performance Table -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-100">
           <h4 class="font-bold text-sm text-slate-800">Sales Transactions & Profit Margins</h4>
@@ -467,7 +459,7 @@
       </div>
     </div>
 
-    <!-- TAB 6: USERS, PERMISSIONS & APPROVALS -->
+    <!-- TAB 6: USERS, PERMISSIONS & APPROVALS (WITH DEACTIVATE/REACTIVATE/DELETE) -->
     <div id="tabContent_users" class="hidden space-y-6">
       
       <!-- Pending Approvals Queue -->
@@ -484,29 +476,35 @@
         </div>
       </div>
 
-      <!-- Active Users Table -->
+      <!-- All Users Management Table (Active / Inactive) -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-          <h4 class="font-bold text-sm text-slate-800">Active System Users</h4>
+          <div>
+            <h4 class="font-bold text-sm text-slate-800">System Users & Account Control</h4>
+            <p class="text-xs text-slate-500">Manage permissions, deactivate accounts, reactivate, or permanently delete users</p>
+          </div>
           <button onclick="openCreateUserModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition">
             <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
             <span>Add User Directly</span>
           </button>
         </div>
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
-            <tr>
-              <th class="p-3.5">Name & Email</th>
-              <th class="p-3.5">Company</th>
-              <th class="p-3.5">Role</th>
-              <th class="p-3.5">Permissions</th>
-              <th class="p-3.5 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="usersTableBody" class="divide-y divide-slate-100">
-            <!-- Populated by JS -->
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-3.5">Name & Email</th>
+                <th class="p-3.5">Company</th>
+                <th class="p-3.5">Role</th>
+                <th class="p-3.5 text-center">Status</th>
+                <th class="p-3.5">Permissions</th>
+                <th class="p-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-slate-100">
+              <!-- Populated by JS with Toggle Deactivate, Delete & Config Perms -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -589,9 +587,7 @@
 
   </main>
 
-  <!-- ========================================== -->
-  <!-- 4. MODALS (ITEMS, DEPOSITS, USERS, ETC.)   -->
-  <!-- ========================================== -->
+  <!-- 4. MODALS (ITEMS, DEPOSITS, USERS, ETC.) -->
 
   <!-- Add / Edit Inventory Modal -->
   <div id="itemModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
@@ -755,9 +751,7 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 5. 80MM THERMAL RECEIPT CONTAINER (PRINT)  -->
-  <!-- ========================================== -->
+  <!-- 5. 80MM THERMAL RECEIPT CONTAINER (PRINT) -->
   <div id="printableReceipt" class="hidden font-mono text-xs p-2 text-black bg-white">
     <div class="text-center space-y-1 pb-2 border-b border-black">
       <h2 id="receiptCompanyName" class="text-sm font-bold uppercase">STORE NAME</h2>
@@ -813,9 +807,7 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 6. CORE APPLICATION LOGIC (JAVASCRIPT)     -->
-  <!-- ========================================== -->
+  <!-- 6. CORE APPLICATION LOGIC (JAVASCRIPT) -->
   <script>
     // --- 6.1 MULTI-LANGUAGE TRANSLATIONS (EN, HI, GU) ---
     const i18n = {
@@ -1012,7 +1004,7 @@
       localStorage.setItem('cs_ledger', JSON.stringify(ledger));
     }
 
-    // --- 6.4 AUTHENTICATION & REGISTRATION ---
+    // --- 6.4 AUTHENTICATION & LOGIN (WITH DEACTIVATION GUARD) ---
     function toggleAuthView(view) {
       document.getElementById('loginView').classList.toggle('hidden', view === 'register');
       document.getElementById('registerView').classList.toggle('hidden', view === 'login');
@@ -1040,8 +1032,14 @@
         return;
       }
 
+      // Check account status
       if (user.status === 'pending') {
         alert("Your account is pending approval by your administrator.");
+        return;
+      }
+
+      if (user.status === 'deactivated' || user.status === 'inactive') {
+        alert("Your account is deactivated. Contact your administrator.");
         return;
       }
 
@@ -1734,9 +1732,9 @@
       }
     }
 
-    // --- 6.11 USERS, APPROVALS & DYNAMIC PERMISSIONS ---
+    // --- 6.11 USERS, APPROVALS, DEACTIVATION, REACTIVATION & DELETION ---
     function renderUsersAndApprovals() {
-      // Pending Approvals
+      // 1. Pending Registrations
       const pendCont = document.getElementById('pendingRegistrationsContainer');
       pendCont.innerHTML = '';
 
@@ -1762,47 +1760,158 @@
             <p class="text-[10px] text-amber-700">Company: ${comp.name}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick="approveUser('${u.id}')" class="px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold">Approve</button>
-            <button onclick="rejectUser('${u.id}')" class="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg font-bold">Reject</button>
+            <button onclick="approveUser('${u.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold">Approve</button>
+            <button onclick="deleteUser('${u.id}')" class="px-3 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg font-bold">Reject</button>
           </div>
         `;
         pendCont.appendChild(card);
       });
 
-      // Active Users
+      // 2. All Users (Approved, Deactivated, Pending)
       const tbody = document.getElementById('usersTableBody');
       tbody.innerHTML = '';
-      const active = users.filter(u => {
+      const list = users.filter(u => {
         const matchesComp = currentUser.role === 'superadmin' ? true : u.companyId === currentUser.companyId;
-        return u.status === 'approved' && matchesComp;
+        return matchesComp;
       });
 
-      active.forEach(u => {
+      list.forEach(u => {
         const comp = companies.find(c => c.id === u.companyId) || { name: 'HQ' };
+        const isPrimarySuperAdmin = u.role === 'superadmin' && u.id === 'usr_super';
+        const isSelf = currentUser && currentUser.id === u.id;
+        const isDeactivated = u.status === 'deactivated' || u.status === 'inactive';
+        const isApproved = u.status === 'approved';
+
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 border-b border-slate-100";
+
+        // Status badge styling
+        let statusBadge = '';
+        if (isApproved) {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">ACTIVE</span>';
+        } else if (isDeactivated) {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">DEACTIVATED</span>';
+        } else {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">PENDING</span>';
+        }
+
+        // Action buttons
+        let actionButtons = '';
+        if (isPrimarySuperAdmin) {
+          actionButtons = '<span class="text-slate-400 font-medium text-[11px] italic">Platform Owner</span>';
+        } else {
+          // Toggle Deactivate / Reactivate
+          const toggleAction = isApproved
+            ? `<button onclick="toggleUserStatus('${u.id}', 'deactivate')" class="px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[11px]" title="Deactivate user login">Deactivate</button>`
+            : `<button onclick="toggleUserStatus('${u.id}', 'reactivate')" class="px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px]" title="Reactivate user">Reactivate</button>`;
+
+          // Delete action
+          const deleteBtn = `<button onclick="deleteUser('${u.id}')" class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[11px]" title="Permanently delete user">Delete</button>`;
+
+          // Permissions
+          const permBtn = `<button onclick="openPermModal('${u.id}')" class="text-indigo-600 font-bold hover:underline text-[11px]">Permissions</button>`;
+
+          actionButtons = `
+            <div class="flex items-center justify-end gap-1.5">
+              ${permBtn}
+              ${toggleAction}
+              ${deleteBtn}
+            </div>
+          `;
+        }
+
         tr.innerHTML = `
           <td class="p-3.5">
-            <span class="font-bold text-slate-800">${u.name}</span>
+            <span class="font-bold text-slate-800">${u.name}</span> ${isSelf ? '<span class="text-[10px] text-indigo-600 font-bold">(You)</span>' : ''}
             <div class="text-[10px] text-slate-400">${u.email}</div>
           </td>
           <td class="p-3.5 text-slate-600">${comp.name}</td>
           <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'superadmin' ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'}">${u.role.toUpperCase()}</span></td>
+          <td class="p-3.5 text-center">${statusBadge}</td>
           <td class="p-3.5">
-            <button onclick="openPermModal('${u.id}')" class="text-indigo-600 font-bold hover:underline">Config Permissions</button>
+            <div class="flex flex-wrap gap-1 text-[9px] text-slate-500">
+              ${u.permissions?.pos ? '<span class="px-1.5 py-0.2 rounded bg-slate-100">POS</span>' : ''}
+              ${u.permissions?.inventory ? '<span class="px-1.5 py-0.2 rounded bg-slate-100">Stock</span>' : ''}
+              ${u.permissions?.ledger ? '<span class="px-1.5 py-0.2 rounded bg-slate-100">Ledger</span>' : ''}
+              ${u.permissions?.pnl ? '<span class="px-1.5 py-0.2 rounded bg-slate-100">P&L</span>' : ''}
+            </div>
           </td>
           <td class="p-3.5 text-right">
-            ${u.role !== 'superadmin' ? `<button onclick="rejectUser('${u.id}')" class="text-rose-600 font-bold hover:underline">Delete</button>` : '<span class="text-slate-400">Primary</span>'}
+            ${actionButtons}
           </td>
         `;
         tbody.appendChild(tr);
       });
+      lucide.createIcons();
+    }
+
+    function toggleUserStatus(id, action) {
+      const u = users.find(x => x.id === id);
+      if (!u) return;
+
+      if (u.id === 'usr_super' || u.role === 'superadmin') {
+        alert("The platform owner super admin account cannot be deactivated.");
+        return;
+      }
+
+      if (currentUser && currentUser.id === id && action === 'deactivate') {
+        if (!confirm("Warning: You are about to deactivate your own currently active account. Proceed?")) {
+          return;
+        }
+      }
+
+      if (action === 'deactivate') {
+        if (confirm(`Are you sure you want to deactivate ${u.name}? They will be blocked from logging into the portal.`)) {
+          u.status = 'deactivated';
+          saveData();
+          renderUsersAndApprovals();
+          renderCompanies();
+          alert(`User ${u.name} has been deactivated.`);
+          if (currentUser && currentUser.id === id) {
+            logout();
+          }
+        }
+      } else {
+        // Reactivate
+        const company = companies.find(c => c.id === u.companyId);
+        const currentCount = users.filter(x => x.companyId === u.companyId && x.status === 'approved').length;
+        if (company && currentCount >= company.userQuota) {
+          alert(`Cannot reactivate: ${company.name} has already utilized its user quota limit (${currentCount}/${company.userQuota}).`);
+          return;
+        }
+
+        u.status = 'approved';
+        saveData();
+        renderUsersAndApprovals();
+        renderCompanies();
+        alert(`User ${u.name} has been reactivated successfully.`);
+      }
+    }
+
+    function deleteUser(id) {
+      const u = users.find(x => x.id === id);
+      if (!u) return;
+
+      if (u.id === 'usr_super' || u.role === 'superadmin') {
+        alert("The primary Super Admin account cannot be deleted.");
+        return;
+      }
+
+      if (confirm(`Are you sure you want to permanently delete user "${u.name}" (${u.email})? This action cannot be undone.`)) {
+        users = users.filter(x => x.id !== id);
+        saveData();
+        renderUsersAndApprovals();
+        renderCompanies();
+        alert(`User "${u.name}" has been deleted.`);
+        if (currentUser && currentUser.id === id) {
+          logout();
+        }
+      }
     }
 
     function approveUser(id) {
       const u = users.find(x => x.id === id);
       if (u) {
-        // Enforce Quota
         const company = companies.find(c => c.id === u.companyId);
         const currentCount = users.filter(x => x.companyId === u.companyId && x.status === 'approved').length;
         if (company && currentCount >= company.userQuota) {
@@ -1811,15 +1920,6 @@
         }
 
         u.status = 'approved';
-        saveData();
-        renderUsersAndApprovals();
-        renderCompanies();
-      }
-    }
-
-    function rejectUser(id) {
-      if (confirm("Delete this user?")) {
-        users = users.filter(x => x.id !== id);
         saveData();
         renderUsersAndApprovals();
         renderCompanies();
@@ -1895,6 +1995,7 @@
         };
         saveData();
         closePermModal();
+        renderUsersAndApprovals();
         alert("Permissions updated!");
       }
     }
